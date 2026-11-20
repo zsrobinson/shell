@@ -12,6 +12,7 @@ export default defineConfig({
   optimizeDeps: {
     exclude: ["@zsrobinson/shell"],
     include: [
+      "recharts",
       "use-sync-external-store/shim",
       "use-sync-external-store/shim/with-selector",
     ],

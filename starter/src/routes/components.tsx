@@ -1,3 +1,4 @@
+import { ChartGallery } from "../chart-gallery"
 import {
   Select,
   SelectTrigger,
@@ -167,6 +168,7 @@ function Components() {
     return (
       <div className="bg-background p-4 text-foreground">
         <Gallery />
+        <ChartGallery />
       </div>
     )
   return (
