@@ -1,0 +1,27 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "@fontsource-variable/geist";
+@custom-variant dark (&:is(.dark *));
+@theme inline {
+ --font-sans: 'Geist Variable', sans-serif;
+ --color-background: var(--background); --color-foreground:var(--foreground);
+ --color-card:var(--card); --color-card-foreground:var(--foreground);
+ --color-popover:var(--card); --color-popover-foreground:var(--foreground);
+ --color-primary:var(--primary); --color-primary-foreground:var(--primary-foreground);
+ --color-secondary:var(--secondary); --color-secondary-foreground:var(--foreground);
+ --color-muted:var(--secondary); --color-muted-foreground:var(--muted-foreground);
+ --color-accent:var(--service-accent); --color-accent-foreground:var(--foreground);
+ --color-destructive:var(--destructive); --color-border:var(--border); --color-input:var(--border); --color-ring:var(--muted-foreground);
+ --radius-sm:calc(var(--radius) - 4px); --radius-md:calc(var(--radius) - 2px); --radius-lg:var(--radius); --radius-xl:calc(var(--radius) + 4px);
+}
+/* Exact Flexoki base/paper/black and red values; https://stephango.com/flexoki */
+:root {--radius:.625rem;--background:#FFFCF0;--foreground:#100F0F;--card:#FFFCF0;--primary:#100F0F;--primary-foreground:#FFFCF0;--secondary:#F2F0E5;--muted-foreground:#6F6E69;--border:#DAD8CE;--service-accent:#E6E4D9;--destructive:#AF3029;color-scheme:light;}
+.dark {--background:#100F0F;--foreground:#FFFCF0;--card:#1C1B1A;--primary:#FFFCF0;--primary-foreground:#100F0F;--secondary:#1C1B1A;--muted-foreground:#9F9D96;--border:#343331;--service-accent:#282726;--destructive:#D14D41;color-scheme:dark;}
+@layer base { * {@apply border-border outline-ring/50;} body {@apply bg-background text-foreground font-sans; margin:0;} button,a,input,select {touch-action:manipulation;} }
+.shell-header {height:72px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 max(24px,calc((100vw - 1120px)/2));gap:16px;}
+.shell-title {font-size:16px;font-weight:600;display:flex;align-items:center;gap:12px;}
+.shell-right {display:flex;align-items:center;gap:12px;}
+.shell-email {font-size:13px;color:var(--muted-foreground);}
+.shell-main {max-width:1120px;margin:0 auto;padding:48px 24px;}
+@media(max-width:640px){.shell-header{padding:0 16px;height:64px}.shell-email{display:none}.shell-main{padding:32px 16px}.shell-right{gap:4px}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
