@@ -146,3 +146,5 @@ The UI files are generated Base UI Rhea components. Adaptations are relative
 imports, the local clsx/tailwind-merge helper, pointer cursors on interactive
 items, transparent dialog overlays, the shared Sonner theme and synchronous
 use-mobile. Flexoki, Geist, the radius scale and data-hue remain centralized.
+
+Use `Page viewport` for workspaces such as a console: it fills the space below the sticky 48px entity bar. Its content must use `min-h-0` and scroll internally; ordinary pages retain the shared 5xl content column.

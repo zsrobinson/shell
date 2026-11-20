@@ -1,7 +1,7 @@
 import type { ComponentProps } from "react"
 import { cn } from "../lib/utils"
 
-/** The content column. Every app page uses the same width and padding. */
+/** Shared left-aligned content column; viewport pages own their internal scrolling. */
 export function Page({
   className,
   viewport = false,
