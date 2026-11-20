@@ -116,6 +116,13 @@ import {
 import { Skeleton } from "@zsrobinson/shell/ui/skeleton"
 import { Spinner } from "@zsrobinson/shell/ui/spinner"
 import { Switch } from "@zsrobinson/shell/ui/switch"
+import { Checkbox } from "@zsrobinson/shell/ui/checkbox"
+import { Calendar } from "@zsrobinson/shell/ui/calendar"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@zsrobinson/shell/ui/popover"
 import {
   Table,
   TableHeader,
@@ -281,6 +288,18 @@ function Gallery() {
               <Switch defaultChecked />
               Enabled
             </Label>
+            <Label className="flex items-center gap-2">
+              <Checkbox defaultChecked />
+              Include in totals
+            </Label>
+            <Popover>
+              <PopoverTrigger render={<Button variant="outline" />}>
+                Pick a date
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar mode="single" />
+              </PopoverContent>
+            </Popover>
             <NativeSelect aria-label="Group">
               <NativeSelectOptGroup label="Groups">
                 <NativeSelectOption>Default</NativeSelectOption>

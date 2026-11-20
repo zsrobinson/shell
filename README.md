@@ -48,7 +48,7 @@ New app checklist:
 | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `@zsrobinson/shell`                  | AppShell, AppIcon, Page, PageHeader, PageTitle, PageMeta, PageActions, PageGrid, PageStack, SectionGroup, AppNavigation, theme hooks, toast, app types |
 | `@zsrobinson/shell/styles.css`       | Tailwind v4, Flexoki tokens, Geist, radii, Rhea variants and the standard Tailwind type scale                                                          |
-| `@zsrobinson/shell/ui/*`             | Official Rhea primitives: button, card, sidebar, table, field, dialog, and the other UI modules                                                        |
+| `@zsrobinson/shell/ui/*`             | Official Rhea primitives: button, card, sidebar, table, field, dialog, checkbox, popover, calendar, and the other UI modules                           |
 | `@zsrobinson/shell/blocks/*`         | confirm-action, copy-button, detail-list, list-row, query-error, file-drop, upload-progress, page-states                                               |
 | `@zsrobinson/shell/lib/api`          | ApiError, parseJson, getJson, errorMessage                                                                                                             |
 | `@zsrobinson/shell/lib/format`       | Bytes/MiB, duration, relative/absolute time, percent, count, pluralize, parseTime                                                                      |
@@ -165,7 +165,11 @@ Keep a series' key and color consistent across pages. Supply a descriptive
 states, tabular numbers, keyboard accessible charts and tooltips; single series
 charts omit the legend. `value` keeps a current reading alongside a card title.
 
-`TrendChart` and the cards take `stacked` (bars stack by sign, so negative
+`formatTick` and `formatTimeTick` give the axes rounder labels than the
+tooltip (for example `$105k` and month names), `curve="linear"` draws straight
+segments that never overshoot, `references` adds labelled dashed lines such as a
+budget or target, and `dashed` draws listed series as dashed lines without fill,
+such as a projection. `TrendChart` and the cards take `stacked` (bars stack by sign, so negative
 series grow below a zero line), `formatTime` for ticks and tooltip headings,
 and `className` for the chart height. `baseline="data"` fits an area chart's
 value axis to its series instead of zero, for balances and other levels where

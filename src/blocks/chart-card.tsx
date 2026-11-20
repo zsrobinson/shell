@@ -86,6 +86,11 @@ export function TrendChart({
   formatTime,
   className,
   baseline = "zero",
+  formatTick,
+  formatTimeTick,
+  curve = "monotone",
+  references = [],
+  dashed = [],
 }: {
   data: ChartPoint[]
   config: ChartConfig
@@ -106,6 +111,16 @@ export function TrendChart({
    * stacks always start at zero.
    */
   baseline?: "zero" | "data"
+  /** Value-axis ticks, usually rounder than `format`, which the tooltip keeps. */
+  formatTick?: (value: number) => string
+  /** Time-axis ticks, for example months on a daily series; the tooltip keeps `formatTime`. */
+  formatTimeTick?: (time: number) => string
+  /** `linear` draws straight segments that never overshoot the data. */
+  curve?: "monotone" | "linear"
+  /** Labelled horizontal lines such as a budget or target, in neutral ink. */
+  references?: { value: number; label?: string }[]
+  /** Series keys drawn as dashed lines without fill, such as a projection. */
+  dashed?: string[]
 }) {
   const height = className ?? (sparkline ? "h-12" : "h-56")
   const negative = data.some((p) =>
@@ -151,6 +166,7 @@ export function TrendChart({
               const time = chartTimestamp(value)
               if (time === undefined) return "—"
               return (
+                formatTimeTick?.(time) ??
                 formatTime?.(time) ??
                 formatChartTime(
                   time,
@@ -173,7 +189,7 @@ export function TrendChart({
             }
             tickLine={false}
             axisLine={false}
-            tickFormatter={format}
+            tickFormatter={formatTick ?? format}
             tick={{ fontSize: 11, width: 70 }}
           />
         )}
@@ -214,6 +230,27 @@ export function TrendChart({
         {negative && (
           <ReferenceLine y={0} stroke="var(--border)" strokeWidth={1} />
         )}
+        {!sparkline &&
+          references.map((r) => (
+            <ReferenceLine
+              key={`${r.value}-${r.label ?? ""}`}
+              y={r.value}
+              stroke="var(--muted-foreground)"
+              strokeDasharray="4 4"
+              strokeWidth={1}
+              ifOverflow="extendDomain"
+              label={
+                r.label
+                  ? {
+                      value: r.label,
+                      position: "insideTopRight",
+                      fill: "var(--muted-foreground)",
+                      fontSize: 11,
+                    }
+                  : undefined
+              }
+            />
+          ))}
         {Object.keys(config).map((key, i) =>
           kind === "bar" ? (
             <Bar
@@ -232,12 +269,14 @@ export function TrendChart({
             <Area
               key={key}
               dataKey={key}
-              type="monotone"
+              type={curve}
               stroke={`var(--color-${key})`}
               fill={`var(--color-${key})`}
-              fillOpacity={sparkline ? 0.12 : 0.06}
+              fillOpacity={dashed.includes(key) ? 0 : sparkline ? 0.12 : 0.06}
               strokeWidth={2}
-              strokeDasharray={i > 4 ? "4 3" : undefined}
+              strokeDasharray={
+                i > 4 || dashed.includes(key) ? "4 3" : undefined
+              }
               stackId={stacked ? "stack" : undefined}
               connectNulls={false}
               isAnimationActive={false}
