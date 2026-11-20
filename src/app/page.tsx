@@ -2,12 +2,17 @@ import type { ComponentProps } from "react"
 import { cn } from "../lib/utils"
 
 /** The content column. Every app page uses the same width and padding. */
-export function Page({ className, ...props }: ComponentProps<"div">) {
+export function Page({
+  className,
+  viewport = false,
+  ...props
+}: ComponentProps<"div"> & { viewport?: boolean }) {
   return (
     <div
       data-slot="page"
       className={cn(
-        "flex w-full max-w-3xl min-w-0 flex-col gap-4 p-4 md:p-6",
+        "flex w-full max-w-5xl min-w-0 flex-col gap-4 p-4 md:p-6",
+        viewport && "h-[calc(100svh-3rem)] min-h-0 max-w-none overflow-hidden",
         className
       )}
       {...props}

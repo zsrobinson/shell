@@ -134,7 +134,7 @@ function Flyout({ item }: { item: NavItem }) {
             onClick={() => setOpenMobile(false)}
             className={
               i > 0 && child.section !== item.children?.[i - 1].section
-                ? "mt-2"
+                ? "mt-1"
                 : ""
             }
           >
@@ -191,8 +191,7 @@ export function AppNavigation({ groups }: { groups: NavGroup[] }) {
                           onClick={() => setOpenMobile(false)}
                           className={item.active ? "font-medium" : ""}
                         >
-                          {item.icon}
-                          {item.status}
+                          {item.status ?? item.icon}
                           <span>{item.label}</span>
                         </SidebarMenuButton>
                         {item.badge !== undefined ? (
@@ -217,7 +216,7 @@ export function AppNavigation({ groups }: { groups: NavGroup[] }) {
                                   i > 0 &&
                                   child.section !==
                                     item.children?.[i - 1].section
-                                    ? "mt-2"
+                                    ? "mt-1"
                                     : ""
                                 }
                               >
@@ -250,7 +249,7 @@ export function AppNavigation({ groups }: { groups: NavGroup[] }) {
                 key={child.id}
                 className={
                   i > 0 && child.section !== active.children?.[i - 1].section
-                    ? "mt-2"
+                    ? "mt-1"
                     : ""
                 }
               >

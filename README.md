@@ -135,10 +135,11 @@ sticky 48px bar, desktop entity actions, a phone page menu and compact action
 menu. The phone sheet switches entities and apps. The existing `nav` slot and
 `breadcrumbs` remain available for apps without entities.
 
-Page owns `p-4 md:p-6`, `gap-4`, a left-anchored max-w-3xl column and text-xl
+Page owns `p-4 md:p-6`, `gap-4`, a left-anchored max-w-5xl column and text-xl
 page titles. Rhea cards keep their generated 20px spacing; only nested cards
 use size=sm. PageGrid defaults to one column; two columns are for comparable
-content. SectionGroup now behaves as PageStack so unrelated topics retain
+content. Page viewport reserves the space below the sticky 48px entity bar for
+applications such as a console, with scrolling owned by its inner pane. SectionGroup now behaves as PageStack so unrelated topics retain
 separate surfaces. Detail rows are 36px on desktop and 44px below sm.
 
 The UI files are generated Base UI Rhea components. Adaptations are relative
