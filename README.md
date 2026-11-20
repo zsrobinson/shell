@@ -148,3 +148,5 @@ items, transparent dialog overlays, the shared Sonner theme and synchronous
 use-mobile. Flexoki, Geist, the radius scale and data-hue remain centralized.
 
 Use `Page viewport` for workspaces such as a console: it fills the space below the sticky 48px entity bar. Its content must use `min-h-0` and scroll internally; ordinary pages retain the shared 5xl content column.
+
+Use `FormStack` inside `Page` for form topics: it keeps the shared left edge and caps fields at 3xl, while lists and overview grids use the full content width.

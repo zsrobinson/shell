@@ -105,3 +105,8 @@ export function PageStack({ className, ...props }: ComponentProps<"div">) {
 export function SectionGroup(props: ComponentProps<"div">) {
   return <PageStack {...props} />
 }
+
+/** Forms share the page’s left edge while keeping fields within a readable width. */
+export function FormStack({ className, ...props }: ComponentProps<"div">) {
+  return <PageStack className={cn("w-full max-w-3xl", className)} {...props} />
+}
