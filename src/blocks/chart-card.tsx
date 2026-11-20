@@ -79,6 +79,7 @@ export function TrendChart({
   stacked = false,
   formatTime,
   className,
+  baseline = "zero",
 }: {
   data: ChartPoint[]
   config: ChartConfig
@@ -93,6 +94,12 @@ export function TrendChart({
   formatTime?: (time: number) => string
   /** Overrides the chart height, for example `h-40`. */
   className?: string
+  /**
+   * `zero` anchors the value axis at zero; `data` fits it to the series, for
+   * levels such as a balance where change matters more than size. Bars and
+   * stacks always start at zero.
+   */
+  baseline?: "zero" | "data"
 }) {
   const height = className ?? (sparkline ? "h-12" : "h-56")
   const negative = data.some((p) =>
@@ -149,6 +156,11 @@ export function TrendChart({
         {!sparkline && (
           <YAxis
             width={72}
+            domain={
+              baseline === "data" && kind === "area" && !stacked
+                ? ["auto", "auto"]
+                : undefined
+            }
             tickLine={false}
             axisLine={false}
             tickFormatter={format}
@@ -341,110 +353,113 @@ export function DonutChart({
     slices.map((d) => [d.key, { label: d.label, color: d.color }])
   ) satisfies ChartConfig
   return (
-    <div className="grid items-center gap-4 sm:grid-cols-[11rem_minmax(0,1fr)]">
-      <ChartContainer
-        config={config}
-        aria-label={label}
-        role="img"
-        className="mx-auto aspect-square h-44 tabular-nums"
-      >
-        <PieChart>
-          <ChartTooltip
-            content={
-              <ChartTooltipContent
-                hideLabel
-                nameKey="key"
-                formatter={(value, _name, item) => (
-                  <span className="flex w-full justify-between gap-4">
-                    <span>{String(item.payload?.label ?? "")}</span>
-                    <span className="font-medium tabular-nums">
-                      {format(Number(value))}
+    // The legend sits beside the ring only when the card itself is wide enough.
+    <div className="@container">
+      <div className="grid items-center gap-4 @md:grid-cols-[11rem_minmax(0,1fr)]">
+        <ChartContainer
+          config={config}
+          aria-label={label}
+          role="img"
+          className="mx-auto aspect-square h-44 tabular-nums"
+        >
+          <PieChart>
+            <ChartTooltip
+              content={
+                <ChartTooltipContent
+                  hideLabel
+                  nameKey="key"
+                  formatter={(value, _name, item) => (
+                    <span className="flex w-full justify-between gap-4">
+                      <span>{String(item.payload?.label ?? "")}</span>
+                      <span className="font-medium tabular-nums">
+                        {format(Number(value))}
+                      </span>
                     </span>
-                  </span>
-                )}
-              />
-            }
-          />
-          <Pie
-            data={slices}
-            dataKey="value"
-            nameKey="key"
-            innerRadius="68%"
-            outerRadius="100%"
-            paddingAngle={slices.length > 1 ? 1.5 : 0}
-            cornerRadius={3}
-            stroke="var(--card)"
-            strokeWidth={2}
-            isAnimationActive={false}
-          >
-            {slices.map((d) => (
-              <Cell key={d.key} fill={d.color} />
-            ))}
-            <Label
-              position="center"
-              content={({ viewBox }) => {
-                if (!viewBox || !("cx" in viewBox)) return null
-                const { cx = 0, cy = 0 } = viewBox
-                return (
-                  <text x={cx} y={cy} textAnchor="middle">
-                    <tspan
-                      x={cx}
-                      y={cy - 4}
-                      className="fill-foreground text-base font-semibold"
-                    >
-                      {format(total)}
-                    </tspan>
-                    <tspan
-                      x={cx}
-                      y={cy + 14}
-                      className="fill-muted-foreground text-xs"
-                    >
-                      {totalLabel}
-                    </tspan>
-                  </text>
-                )
-              }}
+                  )}
+                />
+              }
             />
-          </Pie>
-        </PieChart>
-      </ChartContainer>
-      <ul className="grid min-w-0 gap-0.5 text-sm">
-        {slices.map((d) => {
-          const content = (
-            <>
-              <span
-                aria-hidden
-                className="size-2.5 shrink-0 rounded-[3px]"
-                style={{ background: d.color }}
+            <Pie
+              data={slices}
+              dataKey="value"
+              nameKey="key"
+              innerRadius="68%"
+              outerRadius="100%"
+              paddingAngle={slices.length > 1 ? 1.5 : 0}
+              cornerRadius={3}
+              stroke="var(--card)"
+              strokeWidth={2}
+              isAnimationActive={false}
+            >
+              {slices.map((d) => (
+                <Cell key={d.key} fill={d.color} />
+              ))}
+              <Label
+                position="center"
+                content={({ viewBox }) => {
+                  if (!viewBox || !("cx" in viewBox)) return null
+                  const { cx = 0, cy = 0 } = viewBox
+                  return (
+                    <text x={cx} y={cy} textAnchor="middle">
+                      <tspan
+                        x={cx}
+                        y={cy - 4}
+                        className="fill-foreground text-base font-semibold"
+                      >
+                        {format(total)}
+                      </tspan>
+                      <tspan
+                        x={cx}
+                        y={cy + 14}
+                        className="fill-muted-foreground text-xs"
+                      >
+                        {totalLabel}
+                      </tspan>
+                    </text>
+                  )
+                }}
               />
-              <span className="min-w-0 flex-1 truncate">{d.label}</span>
-              <span className="text-muted-foreground tabular-nums">
-                {Math.round(d.share * 100)}%
-              </span>
-              <span className="w-20 text-right font-medium tabular-nums">
-                {format(d.value)}
-              </span>
-            </>
-          )
-          return (
-            <li key={d.key}>
-              {onSelect && d.key !== "other" ? (
-                <button
-                  type="button"
-                  onClick={() => onSelect(d.key)}
-                  className="flex h-8 w-full items-center gap-2 rounded-md px-1.5 text-left outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring"
-                >
-                  {content}
-                </button>
-              ) : (
-                <div className="flex h-8 items-center gap-2 px-1.5">
-                  {content}
-                </div>
-              )}
-            </li>
-          )
-        })}
-      </ul>
+            </Pie>
+          </PieChart>
+        </ChartContainer>
+        <ul className="grid min-w-0 gap-0.5 text-sm">
+          {slices.map((d) => {
+            const content = (
+              <>
+                <span
+                  aria-hidden
+                  className="size-2.5 shrink-0 rounded-[3px]"
+                  style={{ background: d.color }}
+                />
+                <span className="min-w-0 flex-1 truncate">{d.label}</span>
+                <span className="text-muted-foreground tabular-nums">
+                  {Math.round(d.share * 100)}%
+                </span>
+                <span className="w-20 text-right font-medium tabular-nums">
+                  {format(d.value)}
+                </span>
+              </>
+            )
+            return (
+              <li key={d.key}>
+                {onSelect && d.key !== "other" ? (
+                  <button
+                    type="button"
+                    onClick={() => onSelect(d.key)}
+                    className="flex h-8 w-full items-center gap-2 rounded-md px-1.5 text-left outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    {content}
+                  </button>
+                ) : (
+                  <div className="flex h-8 items-center gap-2 px-1.5">
+                    {content}
+                  </div>
+                )}
+              </li>
+            )
+          })}
+        </ul>
+      </div>
     </div>
   )
 }

@@ -57,7 +57,7 @@ New app checklist:
 | `@zsrobinson/shell/server`           | createShellServer, mountStatic, serve, ServerOptions, ShellEnv, RequestMetadata                                                                        |
 
 Import the stylesheet once; the starter's own CSS is only the import and an
-`@source` directive. All theme decisions belong in shell, not app CSS. Pair `font-mono` with `text-xs` or `text-sm`. Supply data and app navigation to AppShell; it has
+`@source` directive. All theme decisions belong in shell, not app CSS. Pair `font-mono` with `text-xs` or `text-sm`. Supply data and app navigation to AppShell (`searchPlaceholder` names what the command palette finds); it has
 no hostname or service inventory built in. QueryError accepts any error and
 never imports an app's API module. NotFound accepts an optional `homeLabel`.
 
@@ -167,7 +167,10 @@ charts omit the legend. `value` keeps a current reading alongside a card title.
 
 `TrendChart` and the cards take `stacked` (bars stack by sign, so negative
 series grow below a zero line), `formatTime` for ticks and tooltip headings,
-and `className` for the chart height. `DonutChart`/`DonutChartCard` show a
+and `className` for the chart height. `baseline="data"` fits an area chart's
+value axis to its series instead of zero, for balances and other levels where
+change matters more than size; bars and stacks always start at zero. Donut
+legends sit beside the ring only when the card is wide enough, otherwise below. `DonutChart`/`DonutChartCard` show a
 part-to-whole with the total in the centre and a legend with values and shares;
 beyond `max` slices (default five) the rest folds into a neutral Other, and
 `onSelect` turns legend rows into buttons.
