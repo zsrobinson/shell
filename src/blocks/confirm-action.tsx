@@ -24,6 +24,7 @@ type ConfirmActionProps = {
   /** One or two sentences on what will happen. */
   children: ReactNode
   confirmLabel: string
+  dismissLabel?: string
   destructive?: boolean
   /** When set, the person must type this exact text before confirming. */
   typedName?: string
@@ -37,6 +38,7 @@ export function ConfirmAction({
   title,
   children,
   confirmLabel,
+  dismissLabel = "Cancel",
   destructive = false,
   typedName,
   onConfirm,
@@ -110,7 +112,7 @@ export function ConfirmAction({
             <DialogClose
               render={<Button variant="outline" disabled={pending} />}
             >
-              Cancel
+              {dismissLabel}
             </DialogClose>
             <Button
               type="submit"
