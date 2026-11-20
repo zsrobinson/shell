@@ -78,7 +78,10 @@ the upload hook; neither the frame nor the server requires a router.
 The server validates Access JWT signatures, issuer, audience and email, rejects
 mutating requests from a different Origin, and serves `{ email, services }` at
 `GET /api/session`. Hashed `dist/assets` files have immutable one-year caching;
-HTML and navigation fallbacks use `no-cache`. Unexpected errors return generic
+HTML and navigation fallbacks use `no-cache`. Responses retain nosniff, same-origin
+referrers and a self-only Content Security Policy. The starter sets
+`allowSameOriginFrames` for its embedded component gallery; other apps default
+to `frame-ancestors 'none'`. Unexpected errors return generic
 JSON without printing exception messages.
 
 Every request emits one JSON line containing only method, registered route

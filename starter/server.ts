@@ -6,6 +6,7 @@ const required = (key: string) => {
   return value
 }
 const app = createShellServer({
+  allowSameOriginFrames: true,
   issuer: required("ACCESS_ISSUER"),
   audience: required("ACCESS_AUD"),
   publicOrigin: required("PUBLIC_ORIGIN"),
