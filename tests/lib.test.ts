@@ -55,3 +55,25 @@ test("class merging uses standard conditional and Tailwind precedence", async ()
     "text-xs hover:bg-accent"
   )
 })
+test("donut slices sort, share and fold into a neutral Other", async () => {
+  const { donutSlices } = await import("../src/blocks/chart-card")
+  const data = ["a", "b", "c", "d", "e", "f"].map((key, i) => ({
+    key,
+    label: key,
+    value: 60 - i * 10,
+  }))
+  const slices = donutSlices([...data, { key: "z", label: "z", value: 0 }])
+  assert.deepEqual(
+    slices.map((s) => s.key),
+    ["a", "b", "c", "d", "other"]
+  )
+  assert.equal(slices[4].value, 30)
+  assert.equal(slices[4].color, "var(--chart-neutral)")
+  assert.equal(slices[0].color, "var(--chart-1)")
+  assert.ok(Math.abs(slices.reduce((s, d) => s + d.share, 0) - 1) < 1e-9)
+  assert.equal(donutSlices(data.slice(0, 5)).length, 5)
+  assert.equal(
+    donutSlices([{ key: "x", label: "x", value: 1, color: "red" }])[0].color,
+    "red"
+  )
+})
