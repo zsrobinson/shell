@@ -1,28 +1,291 @@
 @import "tailwindcss";
-@source "./";
 @import "tw-animate-css";
+@import "./shadcn-tailwind.css";
 @import "@fontsource-variable/geist";
-@custom-variant dark (&:is(.dark *));
-@theme inline {
- --font-sans: 'Geist Variable', sans-serif;
- --color-background: var(--background); --color-foreground:var(--foreground);
- --color-card:var(--card); --color-card-foreground:var(--foreground);
- --color-popover:var(--card); --color-popover-foreground:var(--foreground);
- --color-primary:var(--primary); --color-primary-foreground:var(--primary-foreground);
- --color-secondary:var(--secondary); --color-secondary-foreground:var(--foreground);
- --color-muted:var(--secondary); --color-muted-foreground:var(--muted-foreground);
- --color-accent:var(--service-accent); --color-accent-foreground:var(--foreground);
- --color-destructive:var(--destructive); --color-border:var(--border); --color-input:var(--border); --color-ring:var(--muted-foreground);
- --radius-sm:calc(var(--radius) - 4px); --radius-md:calc(var(--radius) - 2px); --radius-lg:var(--radius); --radius-xl:calc(var(--radius) + 4px);
+@import "@fontsource-variable/geist-mono";
+@import "./flexoki.css";
+
+/* Scan the shell's own components from the consuming app's build. */
+@source "./";
+
+/*
+ * Dark mode follows the system unless <html> carries .light or .dark,
+ * which the theme toggle sets. No script is needed for the first paint.
+ */
+@custom-variant dark {
+  &:where(.dark, .dark *) {
+    @slot;
+  }
+  @media (prefers-color-scheme: dark) {
+    &:where(:root:not(.light), :root:not(.light) *) {
+      @slot;
+    }
+  }
 }
-/* Exact Flexoki base/paper/black and red values; https://stephango.com/flexoki */
-:root {--radius:.625rem;--background:#FFFCF0;--foreground:#100F0F;--card:#FFFCF0;--primary:#100F0F;--primary-foreground:#FFFCF0;--secondary:#F2F0E5;--muted-foreground:#6F6E69;--border:#DAD8CE;--service-accent:#E6E4D9;--destructive:#AF3029;color-scheme:light;}
-.dark {--background:#100F0F;--foreground:#FFFCF0;--card:#1C1B1A;--primary:#FFFCF0;--primary-foreground:#100F0F;--secondary:#1C1B1A;--muted-foreground:#9F9D96;--border:#343331;--service-accent:#282726;--destructive:#D14D41;color-scheme:dark;}
-@layer base { * {@apply border-border outline-ring/50;} body {@apply bg-background text-foreground font-sans; margin:0;} button,a,input,select {touch-action:manipulation;} }
-.shell-header {height:72px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 max(24px,calc((100vw - 1120px)/2));gap:16px;}
-.shell-title {font-size:16px;font-weight:600;display:flex;align-items:center;gap:12px;}
-.shell-right {display:flex;align-items:center;gap:12px;}
-.shell-email {font-size:13px;color:var(--muted-foreground);}
-.shell-main {max-width:1120px;margin:0 auto;padding:48px 24px;}
-@media(max-width:640px){.shell-header{padding:0 16px;height:64px}.shell-email{display:none}.shell-main{padding:32px 16px}.shell-right{gap:4px}}
-@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+@theme inline {
+  --font-heading: var(--font-sans);
+  --font-sans: "Geist Variable", sans-serif;
+  --font-mono:
+    "Geist Mono Variable", ui-monospace, "SF Mono", Menlo, Consolas,
+    "DejaVu Sans Mono", monospace;
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+/*
+ * Per-app hue. Set data-hue on <html> to one of re, or, ye, gr, cy, bl, pu
+ * or ma; it colours the primary action and the chart scale. Without it the
+ * shell is monochrome. Light themes use the 600 value, dark themes the 400
+ * value, as the Flexoki guide recommends.
+ */
+:root {
+  --hue-light: var(--flexoki-black);
+  --hue-dark: var(--flexoki-200);
+  --hue-200: var(--flexoki-200);
+  --hue-300: var(--flexoki-300);
+  --hue-400: var(--flexoki-400);
+  --hue-500: var(--flexoki-500);
+  --hue-600: var(--flexoki-600);
+  --hue-700: var(--flexoki-700);
+  --hue-800: var(--flexoki-800);
+}
+
+:root[data-hue="re"] {
+  --hue-light: var(--flexoki-red-600);
+  --hue-dark: var(--flexoki-red-400);
+  --hue-200: var(--flexoki-red-200);
+  --hue-300: var(--flexoki-red-300);
+  --hue-400: var(--flexoki-red-400);
+  --hue-500: var(--flexoki-red-500);
+  --hue-600: var(--flexoki-red-600);
+  --hue-700: var(--flexoki-red-700);
+  --hue-800: var(--flexoki-red-800);
+}
+
+:root[data-hue="or"] {
+  --hue-light: var(--flexoki-orange-600);
+  --hue-dark: var(--flexoki-orange-400);
+  --hue-200: var(--flexoki-orange-200);
+  --hue-300: var(--flexoki-orange-300);
+  --hue-400: var(--flexoki-orange-400);
+  --hue-500: var(--flexoki-orange-500);
+  --hue-600: var(--flexoki-orange-600);
+  --hue-700: var(--flexoki-orange-700);
+  --hue-800: var(--flexoki-orange-800);
+}
+
+:root[data-hue="ye"] {
+  --hue-light: var(--flexoki-yellow-600);
+  --hue-dark: var(--flexoki-yellow-400);
+  --hue-200: var(--flexoki-yellow-200);
+  --hue-300: var(--flexoki-yellow-300);
+  --hue-400: var(--flexoki-yellow-400);
+  --hue-500: var(--flexoki-yellow-500);
+  --hue-600: var(--flexoki-yellow-600);
+  --hue-700: var(--flexoki-yellow-700);
+  --hue-800: var(--flexoki-yellow-800);
+}
+
+:root[data-hue="gr"] {
+  --hue-light: var(--flexoki-green-600);
+  --hue-dark: var(--flexoki-green-400);
+  --hue-200: var(--flexoki-green-200);
+  --hue-300: var(--flexoki-green-300);
+  --hue-400: var(--flexoki-green-400);
+  --hue-500: var(--flexoki-green-500);
+  --hue-600: var(--flexoki-green-600);
+  --hue-700: var(--flexoki-green-700);
+  --hue-800: var(--flexoki-green-800);
+}
+
+:root[data-hue="cy"] {
+  --hue-light: var(--flexoki-cyan-600);
+  --hue-dark: var(--flexoki-cyan-400);
+  --hue-200: var(--flexoki-cyan-200);
+  --hue-300: var(--flexoki-cyan-300);
+  --hue-400: var(--flexoki-cyan-400);
+  --hue-500: var(--flexoki-cyan-500);
+  --hue-600: var(--flexoki-cyan-600);
+  --hue-700: var(--flexoki-cyan-700);
+  --hue-800: var(--flexoki-cyan-800);
+}
+
+:root[data-hue="bl"] {
+  --hue-light: var(--flexoki-blue-600);
+  --hue-dark: var(--flexoki-blue-400);
+  --hue-200: var(--flexoki-blue-200);
+  --hue-300: var(--flexoki-blue-300);
+  --hue-400: var(--flexoki-blue-400);
+  --hue-500: var(--flexoki-blue-500);
+  --hue-600: var(--flexoki-blue-600);
+  --hue-700: var(--flexoki-blue-700);
+  --hue-800: var(--flexoki-blue-800);
+}
+
+:root[data-hue="pu"] {
+  --hue-light: var(--flexoki-purple-600);
+  --hue-dark: var(--flexoki-purple-400);
+  --hue-200: var(--flexoki-purple-200);
+  --hue-300: var(--flexoki-purple-300);
+  --hue-400: var(--flexoki-purple-400);
+  --hue-500: var(--flexoki-purple-500);
+  --hue-600: var(--flexoki-purple-600);
+  --hue-700: var(--flexoki-purple-700);
+  --hue-800: var(--flexoki-purple-800);
+}
+
+:root[data-hue="ma"] {
+  --hue-light: var(--flexoki-magenta-600);
+  --hue-dark: var(--flexoki-magenta-400);
+  --hue-200: var(--flexoki-magenta-200);
+  --hue-300: var(--flexoki-magenta-300);
+  --hue-400: var(--flexoki-magenta-400);
+  --hue-500: var(--flexoki-magenta-500);
+  --hue-600: var(--flexoki-magenta-600);
+  --hue-700: var(--flexoki-magenta-700);
+  --hue-800: var(--flexoki-magenta-800);
+}
+
+/*
+ * Semantic tokens. Neutrals follow the Flexoki base mapping:
+ * light bg paper, bg-2 50, ui 100, ui-2 150, ui-3 200, tx-3 300, tx-2 600, tx black;
+ * dark  bg black, bg-2 950, ui 900, ui-2 850, ui-3 800, tx-3 700, tx-2 500, tx 200.
+ */
+:root {
+  color-scheme: light;
+  --radius: 0.625rem;
+  --background: var(--flexoki-paper);
+  --foreground: var(--flexoki-black);
+  --card: var(--flexoki-paper);
+  --card-foreground: var(--flexoki-black);
+  --popover: var(--flexoki-paper);
+  --popover-foreground: var(--flexoki-black);
+  --primary: var(--hue-light);
+  --primary-foreground: var(--flexoki-paper);
+  --secondary: var(--flexoki-50);
+  --secondary-foreground: var(--flexoki-black);
+  --muted: var(--flexoki-50);
+  --muted-foreground: var(--flexoki-600);
+  --accent: var(--flexoki-50);
+  --accent-foreground: var(--flexoki-black);
+  --destructive: var(--flexoki-red-600);
+  --border: var(--flexoki-150);
+  --input: var(--flexoki-150);
+  --ring: var(--flexoki-300);
+  --chart-1: var(--hue-600);
+  --chart-2: var(--hue-500);
+  --chart-3: var(--hue-400);
+  --chart-4: var(--hue-300);
+  --chart-5: var(--hue-200);
+  --sidebar: var(--flexoki-50);
+  --sidebar-foreground: var(--flexoki-black);
+  --sidebar-primary: var(--hue-light);
+  --sidebar-primary-foreground: var(--flexoki-paper);
+  --sidebar-accent: var(--flexoki-100);
+  --sidebar-accent-foreground: var(--flexoki-black);
+  --sidebar-border: var(--flexoki-150);
+  --sidebar-ring: var(--flexoki-300);
+
+  @variant dark {
+    color-scheme: dark;
+    --background: var(--flexoki-black);
+    --foreground: var(--flexoki-200);
+    --card: var(--flexoki-950);
+    --card-foreground: var(--flexoki-200);
+    --popover: var(--flexoki-950);
+    --popover-foreground: var(--flexoki-200);
+    --primary: var(--hue-dark);
+    --primary-foreground: var(--flexoki-black);
+    --secondary: var(--flexoki-900);
+    --secondary-foreground: var(--flexoki-200);
+    --muted: var(--flexoki-900);
+    --muted-foreground: var(--flexoki-500);
+    --accent: var(--flexoki-900);
+    --accent-foreground: var(--flexoki-200);
+    --destructive: var(--flexoki-red-400);
+    --border: var(--flexoki-850);
+    --input: var(--flexoki-850);
+    --ring: var(--flexoki-600);
+    --chart-1: var(--hue-400);
+    --chart-2: var(--hue-500);
+    --chart-3: var(--hue-600);
+    --chart-4: var(--hue-700);
+    --chart-5: var(--hue-800);
+    --sidebar: var(--flexoki-950);
+    --sidebar-foreground: var(--flexoki-200);
+    --sidebar-primary: var(--hue-dark);
+    --sidebar-primary-foreground: var(--flexoki-black);
+    --sidebar-accent: var(--flexoki-900);
+    --sidebar-accent-foreground: var(--flexoki-200);
+    --sidebar-border: var(--flexoki-850);
+    --sidebar-ring: var(--flexoki-600);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+  html {
+    @apply font-sans;
+  }
+}
+
+/* Luma toast shape (style-luma.css .cn-toast). */
+.cn-toast {
+  @apply rounded-2xl;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
