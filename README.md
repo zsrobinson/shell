@@ -165,6 +165,19 @@ Keep a series' key and color consistent across pages. Supply a descriptive
 states, tabular numbers, keyboard accessible charts and tooltips; single series
 charts omit the legend. `value` keeps a current reading alongside a card title.
 
+`TrendChart` and the cards take `stacked` (bars stack by sign, so negative
+series grow below a zero line), `formatTime` for ticks and tooltip headings,
+and `className` for the chart height. `DonutChart`/`DonutChartCard` show a
+part-to-whole with the total in the centre and a legend with values and shares;
+beyond `max` slices (default five) the rest folds into a neutral Other, and
+`onSelect` turns legend rows into buttons.
+
+Sign is not identity: use `var(--chart-positive)` and `var(--chart-negative)`
+for inflow and outflow or gain and loss, and `var(--chart-neutral)` for a
+baseline or Other. The mark steps are validated to stay apart under red-green
+colour blindness; always pair them with position or a signed label. Text uses
+`text-positive` and `text-negative`.
+
 Vite apps must add `"recharts"` to `optimizeDeps.include` (as the starter does),
 because shell ships source and excludes itself from prebundling. This bundles
 Recharts' CommonJS selector dependencies correctly in development. Keep existing

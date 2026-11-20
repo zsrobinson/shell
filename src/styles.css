@@ -42,6 +42,11 @@
   --color-chart-3: var(--chart-3);
   --color-chart-2: var(--chart-2);
   --color-chart-1: var(--chart-1);
+  --color-chart-positive: var(--chart-positive);
+  --color-chart-negative: var(--chart-negative);
+  --color-chart-neutral: var(--chart-neutral);
+  --color-positive: var(--positive);
+  --color-negative: var(--negative);
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
@@ -216,6 +221,16 @@
   --chart-3: var(--flexoki-orange-600);
   --chart-4: var(--flexoki-purple-600);
   --chart-5: var(--flexoki-cyan-600);
+  /*
+   * Sign, not identity: gains/inflows, losses/outflows and a baseline series.
+   * Text uses positive/negative; marks use the chart steps, which keep the
+   * pair apart under red-green colour blindness (validated, adjacent dE >= 12).
+   */
+  --positive: var(--flexoki-green-600);
+  --negative: var(--flexoki-red-600);
+  --chart-positive: var(--flexoki-green-700);
+  --chart-negative: var(--flexoki-red-300);
+  --chart-neutral: var(--flexoki-300);
   --sidebar: var(--flexoki-50);
   --sidebar-foreground: var(--flexoki-black);
   --sidebar-primary: var(--hue-light);
@@ -250,6 +265,11 @@
     --chart-3: var(--flexoki-orange-400);
     --chart-4: var(--flexoki-purple-400);
     --chart-5: var(--flexoki-cyan-400);
+    --positive: var(--flexoki-green-400);
+    --negative: var(--flexoki-red-400);
+    --chart-positive: var(--flexoki-green-400);
+    --chart-negative: var(--flexoki-red-600);
+    --chart-neutral: var(--flexoki-700);
     --sidebar: var(--flexoki-950);
     --sidebar-foreground: var(--flexoki-200);
     --sidebar-primary: var(--hue-dark);
