@@ -109,9 +109,9 @@ export function TrendChart({
         {!sparkline && (
           <XAxis
             dataKey="time"
-            type="number"
-            domain={["dataMin", "dataMax"]}
-            scale="time"
+            type={kind === "bar" ? "category" : "number"}
+            domain={kind === "bar" ? undefined : ["dataMin", "dataMax"]}
+            scale={kind === "bar" ? "auto" : "time"}
             tickLine={false}
             axisLine={false}
             minTickGap={45}
