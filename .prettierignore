@@ -2,3 +2,7 @@ node_modules
 package-lock.json
 src/flexoki.css
 src/shadcn-tailwind.css
+
+starter/node_modules
+starter/dist
+starter/src/routeTree.gen.ts

@@ -1,258 +1,121 @@
 # shell
 
-The shared frame for small internal web apps: a sidebar with an app switcher,
-breadcrumbs, the signed-in email, a theme menu and sign-out, plus the official
-shadcn/ui **Luma** components (Base UI, `base-luma` style) on the
-[Flexoki](https://stephango.com/flexoki) palette with Geist.
+The shared frame and building blocks for small internal web apps: official
+shadcn/ui Luma components (Base UI, `base-luma`, pointer cursors), Flexoki,
+Geist, an app switcher, theme menu and signed-in account controls.
 
-It is plain React and CSS. Nothing in it knows about a router, a data layer, a
-host name or a list of apps, so a Vite app and an Astro island can use it alike.
+## New app
 
-## Contents
-
-| Import                         | What it is                                                                                     |
-| ------------------------------ | ---------------------------------------------------------------------------------------------- |
-| `@zsrobinson/shell`            | `AppShell`, `Page`, `PageHeader`, `PageTitle`, `PageMeta`, `PageActions`, theme hooks, `toast` |
-| `@zsrobinson/shell/styles.css` | Tailwind v4, Flexoki tokens, Geist, the Luma variants                                          |
-| `@zsrobinson/shell/ui/*`       | Luma components: button, card, dialog, sidebar, table, field, item, …                          |
-| `@zsrobinson/shell/hooks/*`    | `use-mobile`                                                                                   |
-
-The components were generated with the shadcn CLI
-(`shadcn init --preset b1GxuTvxQ --template vite --pointer`, then `shadcn add …`)
-and copied unchanged except for three adaptations:
-
-- imports are relative so the package works without a path alias;
-- centered dialogs have a transparent overlay (no dim or blur);
-- `sonner` follows the shell theme instead of `next-themes`, and `use-mobile`
-  reads the media query synchronously.
-
-`src/shadcn-tailwind.css` is `shadcn/dist/tailwind.css` copied unchanged, so
-apps need not install the CLI package. `src/flexoki.css` is the upstream
-palette file, unchanged (MIT, Steph Ango).
-
-## Building an app on shell
-
-### Stack
-
-- Vite, React 19, TypeScript, Tailwind v4 (`@tailwindcss/vite`).
-- TanStack Router with file-based routes and TanStack Query for **all** server
-  data: polling, retries, mutations, invalidation and optimistic updates.
-- Hono on Node for the API and static files, behind Cloudflare Access.
-- `toast` from this package for mutation feedback. No other UI frameworks.
-
-### Folder layout
-
-```text
-app/
-  server.ts              Hono: Access check, /api routes, static dist/
-  src/domain.ts          Types shared by server and panel
-  panel/
-    index.html           <html data-hue="…">
-    src/
-      main.tsx           QueryClient + router
-      styles.css         @import "@zsrobinson/shell/styles.css"; @source "./";
-      routes/            One file per page (TanStack file routes)
-      components/        Page sections, grouped by area
-      lib/               api.ts, queries.ts, mutations.ts, format.ts
-```
-
-Keep modules small: a route file composes cards; each card owns its own query
-and mutation hooks.
-
-### Install
-
-Pin the package by commit and let Tailwind see its sources:
-
-```jsonc
-// package.json
-"@zsrobinson/shell": "git+https://github.com/zsrobinson/shell.git#<commit>"
-```
-
-```css
-/* panel/src/styles.css */
-@import "@zsrobinson/shell/styles.css";
-@source "./";
-```
-
-With Vite, serve the package as source so its entry points share one module
-graph, and pre-bundle the CommonJS shim Base UI reaches through it:
-
-```ts
-optimizeDeps: {
-  exclude: ["@zsrobinson/shell"],
-  include: ["use-sync-external-store/shim", "use-sync-external-store/shim/with-selector"],
-},
-resolve: { dedupe: ["react", "react-dom"] },
-```
-
-### The frame
-
-```tsx
-<AppShell
-  name="Example"
-  email={session.data?.email} // undefined renders a skeleton
-  apps={session.data?.services} // runtime manifest, see below
-  nav={<SidebarGroup>…</SidebarGroup>} // the app's own navigation
-  breadcrumbs={<Breadcrumb>…</Breadcrumb>}
->
-  <Page>
-    <PageHeader>
-      <div>
-        <PageTitle>Things</PageTitle>
-        <PageMeta>
-          <span>3 of 10 things</span>
-        </PageMeta>
-      </div>
-      <PageActions>
-        <Button>New thing</Button>
-      </PageActions>
-    </PageHeader>
-    …
-  </Page>
-</AppShell>
-```
-
-Every app gets the same sidebar width, header height, content width (`max-w-5xl`)
-and spacing. The sidebar becomes a sheet below 768 px; `⌘B`/`Ctrl+B` toggles it.
-
-### Access JWT middleware
-
-Every request, including static assets, must carry a valid Cloudflare Access
-token. Verify it on the server; never trust a header the client could set.
-
-```ts
-import { createRemoteJWKSet, jwtVerify } from "jose"
-
-const keys = createRemoteJWKSet(new URL("/cdn-cgi/access/certs", ACCESS_ISSUER))
-
-app.use("*", async (c, next) => {
-  try {
-    const { payload } = await jwtVerify(
-      c.req.header("Cf-Access-Jwt-Assertion") ?? "",
-      keys,
-      {
-        issuer: ACCESS_ISSUER,
-        audience: ACCESS_AUD,
-      }
-    )
-    if (typeof payload.email !== "string")
-      return c.json({ error: "Access email required" }, 401)
-    c.set("email", payload.email)
-  } catch {
-    return c.json({ error: "Access authentication required" }, 401)
-  }
-  // Mutations must come from the app's own origin.
-  if (
-    !["GET", "HEAD"].includes(c.req.method) &&
-    c.req.header("Origin") !== PUBLIC_ORIGIN
-  )
-    return c.json({ error: "Origin rejected" }, 403)
-  await next()
-})
-```
-
-Expose `GET /api/session` returning `{ email, services }`. Sign-out is the
-Access endpoint `/cdn-cgi/access/logout`, which the user menu links to.
-
-### Runtime app switcher manifest
-
-`services` is an array loaded at runtime from deployment configuration, never
-committed to an app:
-
-```json
-[
-  { "name": "Example", "url": "https://example.example.com/", "colour": "gr" },
-  {
-    "name": "Photos",
-    "url": "https://photos.example.com/",
-    "icon": "/icon.png"
-  }
-]
-```
-
-- `icon` is an image URL (absolute or root-relative) or one or two characters;
-  without it the tile shows the name's first letter.
-- `colour` is a Flexoki hue key (`re or ye gr cy bl pu ma`) or any CSS colour.
-- The entry whose origin matches the page is marked current.
-- Hovering or focusing an entry preconnects to its origin and prefetches its
-  page once. Switching is a normal cross-origin navigation; there are no
-  cross-origin view transitions.
-
-Only list trusted `http(s)` URLs.
-
-### Theme and per-app hue
-
-Neutrals are the Flexoki base scale (paper, 50 … 950, black) in the mapping
-Flexoki recommends: light uses paper/50/100/150 for surfaces and 600/black for
-text; dark uses black/950/900/850 and 500/200. Destructive is red 600 / 400.
-
-One setting picks an optional hue for the primary action and charts:
-
-```html
-<html lang="en" data-hue="gr"></html>
-```
-
-`re`, `or`, `ye`, `gr`, `cy`, `bl`, `pu` or `ma`; light mode uses the hue's 600
-value and dark mode its 400 value. Leave it off for monochrome.
-
-Dark mode follows the system through CSS alone, so the first paint is right
-without a script. The user menu can pin Light or Dark; the choice is stored per
-origin and applied when the shell is imported.
-
-### Docker image
-
-Build the panel in one stage and ship only what runs:
-
-```dockerfile
-FROM node:24-bookworm-slim AS build
-WORKDIR /app
-RUN apt-get update && apt-get install -y --no-install-recommends git ca-certificates
-COPY package*.json ./
-RUN npm ci
-COPY . .
-RUN npm run build
-
-FROM node:24-bookworm-slim
-WORKDIR /app
-ENV NODE_ENV=production
-COPY --from=build /app/node_modules ./node_modules
-COPY --from=build /app/dist ./dist
-COPY --from=build /app/server.ts ./server.ts
-USER node
-CMD ["node_modules/.bin/tsx", "server.ts"]
-```
-
-Serve `dist/assets/*` with `Cache-Control: public, max-age=31536000, immutable`
-(the file names are content hashes, fonts included) and `index.html` without
-long caching. Keep secrets in mounted files, not in the image or the repository.
-
-## Design rules
-
-- **No taglines, subheads, slogans or marketing copy.** A page header is a plain
-  title plus real data, status and actions. `PageHeader` has no description
-  slot on purpose.
-- Show real data only. If a value cannot be measured, say "Unavailable" rather
-  than inventing a number or a chart.
-- Empty states say plainly what is missing and offer one action.
-- Pages over dialogs. Anything with more than a sentence of explanation or a
-  form gets its own routed page. Dialogs are for short confirmations
-  (stop, restart, delete, upgrade); destructive ones may ask the person to
-  type the resource's name.
-- Skeletons first: render the frame at once and fill sections as queries land.
-  Never block navigation on a fetch.
-- Every mutation shows a busy state, disables its control while running and
-  reports the outcome in a toast using the same verb as its button.
-- No gradient blobs, emoji, decorative icons beside headings, oversized hero
-  cards or rows of badges. Calm type: one 20 px page title, 16 px card titles,
-  14 px body.
-- Keyboard first: visible focus, real links for navigation, Enter submits,
-  Escape closes. Check every page at 390 px wide.
-
-## Development
+Copy `starter/` to a new repository and rename `example-panel` in `package.json`,
+`Example` in `src/routes/__root.tsx`, and the HTML title. Run:
 
 ```sh
-npm install
-npm run check   # typecheck, lint, format check, CSS build
+npm run shell:update
+npm ci
+npm run build
+npm run dev
 ```
 
-MIT licensed. Geist and Geist Mono keep their upstream licenses.
+The update command replaces the starter's repository-local `file:..` dependency
+with a full commit pin from shell main and refreshes `package-lock.json`. Commit
+both files. The copied app and its Docker build then work independently.
+
+The starter uses Vite, React 19, TypeScript, Tailwind v4, TanStack Router file
+routes, TanStack Query, and Hono on Node. `/` lists items, `/items/example` is a
+detail page, and `/components` exercises every UI module and shared block in
+light and dark. The app frame exercises sidebar, app switcher, theme controls,
+and the shared toast provider. Confirmations, menus, tooltips and sheets are
+interactive. Keep longer workflows on real pages.
+
+Configure the server with `ACCESS_ISSUER`, `ACCESS_AUD`, `PUBLIC_ORIGIN`,
+`SERVICE_MANIFEST` (path to a JSON array of `{ name, url, icon?, colour? }`),
+`PORT`, and optionally `BIND_ADDRESS` and `METRICS_TOKEN`. Keep credentials and
+the service manifest outside the public repository. Run `npm start`, or build
+the included Dockerfile after pinning shell. Vite proxies `/api` to port 8787;
+the development API still requires a valid Access assertion.
+
+New app checklist:
+
+- Pick `data-hue` on `<html>`: `re`, `or`, `ye`, `gr`, `cy`, `bl`, `pu`, or `ma`.
+- Add the hostname to the tunnel and Cloudflare Access.
+- Add the app to the services manifest in the deployment repository.
+- Add a private Prometheus scrape and a Healthchecks entry.
+- Build, deploy, and check a list, a detail page, and an action.
+
+## Export surface
+
+| Import                               | Contents                                                                                                 |
+| ------------------------------------ | -------------------------------------------------------------------------------------------------------- |
+| `@zsrobinson/shell`                  | AppShell, AppIcon, Page, PageHeader, PageTitle, PageMeta, PageActions, theme hooks, toast, app types     |
+| `@zsrobinson/shell/styles.css`       | Tailwind v4, Flexoki tokens, Geist, radii, Luma variants and `text-code` (0.8125rem)                     |
+| `@zsrobinson/shell/ui/*`             | Official Luma primitives: button, card, sidebar, table, field, dialog, and the other UI modules          |
+| `@zsrobinson/shell/blocks/*`         | confirm-action, copy-button, detail-list, list-row, query-error, file-drop, upload-progress, page-states |
+| `@zsrobinson/shell/lib/api`          | ApiError, parseJson, getJson, errorMessage                                                               |
+| `@zsrobinson/shell/lib/format`       | Bytes/MiB, duration, relative/absolute time, percent, count, pluralize, parseTime                        |
+| `@zsrobinson/shell/lib/use-upload`   | Progress, mutation notifications and upload limit; app supplies transport and cache refresh              |
+| `@zsrobinson/shell/hooks/use-mobile` | Mobile breakpoint hook                                                                                   |
+| `@zsrobinson/shell/server`           | createShellServer, mountStatic, serve, ServerOptions, ShellEnv, RequestMetadata                          |
+
+Import the stylesheet once; the starter's own CSS is only the import and an
+`@source` directive. All theme decisions belong in shell, not app CSS. Pair
+`text-code` with `font-mono`. Supply data and app navigation to AppShell; it has
+no hostname or service inventory built in. QueryError accepts any error and
+never imports an app's API module. NotFound accepts an optional `homeLabel`.
+
+The UI components were generated with
+`shadcn init --preset b1GxuTvxQ --template vite --pointer`, then `shadcn add`.
+Their imports are relative, centered dialogs have transparent overlays, Sonner
+uses the shared theme, and use-mobile reads its media query synchronously.
+`src/shadcn-tailwind.css` and `src/flexoki.css` retain their upstream contents.
+
+## Server boundary
+
+`createShellServer(options)` returns a Hono app. Register app API routes, then
+call `mountStatic(app)` last and `serve({ fetch: app.fetch, ... })`. Hono,
+`@hono/node-server` and jose are peer dependencies. React Query is a peer for
+the upload hook; neither the frame nor the server requires a router.
+
+The server validates Access JWT signatures, issuer, audience and email, rejects
+mutating requests from a different Origin, and serves `{ email, services }` at
+`GET /api/session`. Hashed `dist/assets` files have immutable one-year caching;
+HTML and navigation fallbacks use `no-cache`. Unexpected errors return generic
+JSON without printing exception messages.
+
+Every request emits one JSON line containing only method, registered route
+pattern, status and durationMs. A `log` callback can forward that same metadata
+to an existing Loki exporter. No bodies, emails, query strings, concrete IDs,
+headers or exception content are recorded. Unknown HTTP methods are grouped
+as OTHER. `/metrics` is opt-in via `metrics.authorize(request)`; use a private
+network and a separate scrape credential, never an application login bypass.
+The endpoint exposes `shell_http_requests_total` and the histogram
+`shell_http_request_duration_seconds`, labelled by method, route pattern and
+status. Metrics requests do not count themselves. App domain metrics remain
+owned by the app.
+
+## Update loop
+
+1. Change shell, run checks, inspect `/components`, and push/merge shell.
+2. In each app run `npm run shell:update` to resolve the latest shell **main
+   commit**, pin it, and refresh its lockfile.
+3. Review the dependency diff; run the app's checks and build, inspect its pages,
+   then commit and deploy the app.
+
+A pushed style change never ships to an app until that app's pin is reviewed
+and deployed. Add the same `scripts/shell-update.mjs` and `shell:update` command
+to existing consumers. No floating branch dependencies are used.
+
+## Developing shell
+
+```sh
+npm ci
+npm run check
+npm test
+npm ci --prefix starter
+npm run build --prefix starter
+npm run dev --prefix starter
+```
+
+The in-repository starter installs a packed local copy of shell (`install-links`
+in its `.npmrc`) so React and its types are shared with the app. After editing
+shell, refresh that copy with `npm ci --prefix starter`. CI checks types, lint,
+formatting, tests, CSS generation, and the starter build.
