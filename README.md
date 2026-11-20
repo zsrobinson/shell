@@ -150,3 +150,22 @@ use-mobile. Flexoki, Geist, the radius scale and data-hue remain centralized.
 Use `Page viewport` for workspaces such as a console: it fills the space below the sticky 48px entity bar. Its content must use `min-h-0` and scroll internally; ordinary pages retain the shared 5xl content column.
 
 Use `FormStack` inside `Page` for form topics: it keeps the shared left edge and caps fields at 3xl, while lists and overview grids use the full content width.
+
+## Charts
+
+`ui/chart` is the official base-rhea Recharts component: `ChartContainer`,
+`ChartTooltip`/`ChartTooltipContent`, and `ChartLegend`/`ChartLegendContent`.
+`blocks/chart-card` supplies `ChartCard` (area), `BarChartCard`, `StatChartCard`
+(sparkline), `TrendChart`, and `ChartRangeSelect` (1h, 24h, 7d, 30d).
+Supply epoch seconds in `time`, numeric series keys, and a `ChartConfig` mapping
+those keys to labels and colors. Use `var(--chart-1)` through `var(--chart-5)`;
+the first follows the app accent and the rest use categorical Flexoki colors.
+Keep a series' key and color consistent across pages. Supply a descriptive
+`label` for accessibility and `format` for units. Cards include loading and empty
+states, tabular numbers, keyboard accessible charts and tooltips; single series
+charts omit the legend. `value` keeps a current reading alongside a card title.
+
+Vite apps must add `"recharts"` to `optimizeDeps.include` (as the starter does),
+because shell ships source and excludes itself from prebundling. This bundles
+Recharts' CommonJS selector dependencies correctly in development. Keep existing
+`use-sync-external-store/shim` entries. See `/components` for chart examples.
