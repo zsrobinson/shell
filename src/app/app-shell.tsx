@@ -1,3 +1,4 @@
+import { AppNavigation, type NavGroup } from "./navigation"
 import type { ReactNode } from "react"
 
 import { Separator } from "../components/ui/separator"
@@ -29,6 +30,7 @@ export type AppShellProps = {
   logoutUrl?: string
   /** The app's own navigation: SidebarGroup elements. */
   nav?: ReactNode
+  navGroups?: NavGroup[]
   /** Shown in the top bar, usually a Breadcrumb. */
   breadcrumbs?: ReactNode
   children: ReactNode
@@ -41,17 +43,20 @@ export function AppShell({
   email,
   logoutUrl = "/cdn-cgi/access/logout",
   nav,
+  navGroups,
   breadcrumbs,
   children,
 }: AppShellProps) {
   return (
     <TooltipProvider>
       <SidebarProvider>
-        <Sidebar collapsible="offcanvas">
+        <Sidebar collapsible="icon">
           <SidebarHeader>
             <AppSwitcher name={name} icon={icon} apps={apps} />
           </SidebarHeader>
-          <SidebarContent>{nav}</SidebarContent>
+          <SidebarContent>
+            {navGroups ? <AppNavigation groups={navGroups} /> : nav}
+          </SidebarContent>
           <SidebarFooter>
             <UserMenu email={email} logoutUrl={logoutUrl} />
           </SidebarFooter>

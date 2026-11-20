@@ -190,6 +190,8 @@
  * dark  bg black, bg-2 950, ui 900, ui-2 850, ui-3 800, tx-3 700, tx-2 500, tx 200.
  */
 :root {
+  --page-padding: --spacing(4);
+  --section-gap: --spacing(4);
   color-scheme: light;
   --radius: 0.625rem;
   --background: var(--flexoki-paper);
@@ -288,5 +290,11 @@
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+@media (min-width: 768px) {
+  :root {
+    --page-padding: --spacing(6);
   }
 }

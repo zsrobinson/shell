@@ -44,17 +44,17 @@ New app checklist:
 
 ## Export surface
 
-| Import                               | Contents                                                                                                 |
-| ------------------------------------ | -------------------------------------------------------------------------------------------------------- |
-| `@zsrobinson/shell`                  | AppShell, AppIcon, Page, PageHeader, PageTitle, PageMeta, PageActions, theme hooks, toast, app types     |
-| `@zsrobinson/shell/styles.css`       | Tailwind v4, Flexoki tokens, Geist, radii, Luma variants and `text-code` (0.8125rem)                     |
-| `@zsrobinson/shell/ui/*`             | Official Luma primitives: button, card, sidebar, table, field, dialog, and the other UI modules          |
-| `@zsrobinson/shell/blocks/*`         | confirm-action, copy-button, detail-list, list-row, query-error, file-drop, upload-progress, page-states |
-| `@zsrobinson/shell/lib/api`          | ApiError, parseJson, getJson, errorMessage                                                               |
-| `@zsrobinson/shell/lib/format`       | Bytes/MiB, duration, relative/absolute time, percent, count, pluralize, parseTime                        |
-| `@zsrobinson/shell/lib/use-upload`   | Progress, mutation notifications and upload limit; app supplies transport and cache refresh              |
-| `@zsrobinson/shell/hooks/use-mobile` | Mobile breakpoint hook                                                                                   |
-| `@zsrobinson/shell/server`           | createShellServer, mountStatic, serve, ServerOptions, ShellEnv, RequestMetadata                          |
+| Import                               | Contents                                                                                                                                               |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `@zsrobinson/shell`                  | AppShell, AppIcon, Page, PageHeader, PageTitle, PageMeta, PageActions, PageGrid, PageStack, SectionGroup, AppNavigation, theme hooks, toast, app types |
+| `@zsrobinson/shell/styles.css`       | Tailwind v4, Flexoki tokens, Geist, radii, Luma variants and `text-code` (0.8125rem)                                                                   |
+| `@zsrobinson/shell/ui/*`             | Official Luma primitives: button, card, sidebar, table, field, dialog, and the other UI modules                                                        |
+| `@zsrobinson/shell/blocks/*`         | confirm-action, copy-button, detail-list, list-row, query-error, file-drop, upload-progress, page-states                                               |
+| `@zsrobinson/shell/lib/api`          | ApiError, parseJson, getJson, errorMessage                                                                                                             |
+| `@zsrobinson/shell/lib/format`       | Bytes/MiB, duration, relative/absolute time, percent, count, pluralize, parseTime                                                                      |
+| `@zsrobinson/shell/lib/use-upload`   | Progress, mutation notifications and upload limit; app supplies transport and cache refresh                                                            |
+| `@zsrobinson/shell/hooks/use-mobile` | Mobile breakpoint hook                                                                                                                                 |
+| `@zsrobinson/shell/server`           | createShellServer, mountStatic, serve, ServerOptions, ShellEnv, RequestMetadata                                                                        |
 
 Import the stylesheet once; the starter's own CSS is only the import and an
 `@source` directive. All theme decisions belong in shell, not app CSS. Pair
@@ -122,3 +122,19 @@ The in-repository starter installs a packed local copy of shell (`install-links`
 in its `.npmrc`) so React and its types are shared with the app. After editing
 shell, refresh that copy with `npm ci --prefix starter`. CI checks types, lint,
 formatting, tests, CSS generation, and the starter build.
+
+## Layout and navigation
+
+AppShell accepts `navGroups`: groups of items with stable IDs, labels, icons,
+active state and a `render` router link or anchor. Items can have child links.
+The shell renders the real SidebarMenuSub, opens the current item by default,
+closes the phone sheet after navigation, and expands a selected item from the
+desktop icon rail. The existing `nav` slot remains available for custom content.
+Routing and domain data stay in the app.
+
+Page owns the shared padding and spacing scale: 16px on phones, 24px page
+padding on desktop, and 16px between sections and inside cards. PageGrid offers
+two equal columns or a wide primary column; PageStack aligns vertical sections.
+SectionGroup joins related real Card components into a single Luma surface
+with separators. Page also aligns card headers and table/list row density.
+Keep independent tasks in separate groups and workflows on real pages.
