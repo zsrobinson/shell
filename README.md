@@ -157,7 +157,7 @@ Use `FormStack` inside `Page` for form topics: it keeps the shared left edge and
 `ChartTooltip`/`ChartTooltipContent`, and `ChartLegend`/`ChartLegendContent`.
 `blocks/chart-card` supplies `ChartCard` (area), `BarChartCard`, `StatChartCard`
 (sparkline), `TrendChart`, and `ChartRangeSelect` (1h, 24h, 7d, 30d).
-Supply epoch seconds in `time`, numeric series keys, and a `ChartConfig` mapping
+Supply epoch milliseconds in `time`, numeric series keys, and a `ChartConfig` mapping
 those keys to labels and colors. Use `var(--chart-1)` through `var(--chart-5)`;
 the first follows the app accent and the rest use categorical Flexoki colors.
 Keep a series' key and color consistent across pages. Supply a descriptive
@@ -202,3 +202,10 @@ the consuming app. For example:
   ]}
 />
 ```
+
+Chart timestamps and `formatTime` arguments are epoch-millisecond numbers.
+Convert Prometheus seconds once at the server boundary; pass `Date.parse(iso)`
+for ISO backup timestamps without dividing by 1000. Custom formatters should use
+`Intl.DateTimeFormat(...).format(time)`. Date strings and Date objects are not
+chart keys. Tooltip time comes from `payload[].payload.time`, never the series
+label supplied to shadcn's label callback.
