@@ -6,6 +6,6 @@ const sha = execFileSync("git", ["ls-remote", repository, "refs/heads/main"], {
 if (!/^[a-f0-9]{40}$/.test(sha)) throw new Error("Could not resolve shell main")
 execFileSync(
   "npm",
-  ["install", "--save-exact", `@zsrobinson/shell=git+${repository}#${sha}`],
+  ["install", "--save-exact", `@zsrobinson/shell@git+${repository}#${sha}`],
   { stdio: "inherit" }
 )
