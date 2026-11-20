@@ -9,20 +9,20 @@ import {
 export function ChartGallery() {
   const [range, setRange] = useState<ChartRange>("24h")
   const data = Array.from({ length: 24 }, (_, i) => ({
-    time: 1795132800 + i * 3600,
+    time: 1795132800000 + i * 3600000,
     players: Math.round(8 + 6 * Math.sin(i / 3)),
     backups: 2 + (i % 4),
   }))
   const monthly = Array.from({ length: 6 }, (_, i) => ({
-    time: Date.UTC(2026, 5 + i, 1) / 1000,
+    time: Date.UTC(2026, 5 + i, 1),
     inflow: 4200 + (i % 3) * 300,
     outflow: -(3100 + ((i * 7) % 5) * 260),
   }))
   const month = (time: number) =>
-    new Date(time * 1000).toLocaleString(undefined, {
+    new Intl.DateTimeFormat(undefined, {
       month: "short",
       timeZone: "UTC",
-    })
+    }).format(time)
   const config = { players: { label: "Players", color: "var(--chart-1)" } }
   return (
     <div className="grid gap-4 md:grid-cols-2">

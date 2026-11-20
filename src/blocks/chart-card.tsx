@@ -1,4 +1,9 @@
 import {
+  chartTimestamp,
+  chartTooltipTime,
+  formatChartTime,
+} from "../lib/chart-time"
+import {
   Area,
   AreaChart,
   Bar,
@@ -23,6 +28,7 @@ import {
 } from "../components/ui/chart"
 
 export type ChartRange = "1h" | "24h" | "7d" | "30d"
+/** `time` is numeric epoch milliseconds. */
 export type ChartPoint = { time: number; [key: string]: number | null }
 export const chartNumber = (value: number) =>
   new Intl.NumberFormat(undefined, {
@@ -90,7 +96,7 @@ export function TrendChart({
   sparkline?: boolean
   /** Stack series; bars stack by sign so negative series grow below zero. */
   stacked?: boolean
-  /** Formats `time` (epoch seconds) for ticks and the tooltip heading. */
+  /** Formats `time` (epoch milliseconds) for ticks and the tooltip heading. */
   formatTime?: (time: number) => string
   /** Overrides the chart height, for example `h-40`. */
   className?: string
@@ -137,20 +143,24 @@ export function TrendChart({
             dataKey="time"
             type={kind === "bar" ? "category" : "number"}
             domain={kind === "bar" ? undefined : ["dataMin", "dataMax"]}
-            scale={kind === "bar" ? "auto" : "time"}
+            scale={kind === "bar" ? "auto" : "linear"}
             tickLine={false}
             axisLine={false}
             minTickGap={45}
-            tickFormatter={(v) =>
-              formatTime?.(v) ??
-              new Date(v * 1000).toLocaleString(
-                undefined,
-                data.length > 1 &&
-                  data[data.length - 1].time - data[0].time > 172800
-                  ? { month: "short", day: "numeric" }
-                  : { hour: "numeric", minute: "2-digit" }
+            tickFormatter={(value) => {
+              const time = chartTimestamp(value)
+              if (time === undefined) return "—"
+              return (
+                formatTime?.(time) ??
+                formatChartTime(
+                  time,
+                  data.length > 1 &&
+                    data[data.length - 1].time - data[0].time > 172800000
+                    ? { month: "short", day: "numeric" }
+                    : { hour: "numeric", minute: "2-digit" }
+                )
               )
-            }
+            }}
           />
         )}
         {!sparkline && (
@@ -172,10 +182,14 @@ export function TrendChart({
             content={
               <ChartTooltipContent
                 labelFormatter={(_, payload) => {
-                  const time = Number(payload?.[0]?.payload?.time)
-                  return (
-                    formatTime?.(time) ?? new Date(time * 1000).toLocaleString()
-                  )
+                  const time = chartTooltipTime(payload)
+                  return time === undefined
+                    ? "—"
+                    : (formatTime?.(time) ??
+                        formatChartTime(time, {
+                          dateStyle: "medium",
+                          timeStyle: "short",
+                        }))
                 }}
                 formatter={(value, name) => (
                   <span className="flex w-full justify-between gap-4">
