@@ -18,6 +18,15 @@ import {
 import { Alert, AlertTitle, AlertDescription } from "@zsrobinson/shell/ui/alert"
 import { Badge } from "@zsrobinson/shell/ui/badge"
 import {
+  ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from "@zsrobinson/shell/ui/chart"
+import { Bar, BarChart, CartesianGrid, XAxis } from "recharts"
+import {
   Breadcrumb,
   BreadcrumbList,
   BreadcrumbItem,
@@ -192,6 +201,17 @@ function Components() {
     </Page>
   )
 }
+const chartConfig = {
+  first: { label: "First", color: "var(--chart-1)" },
+  second: { label: "Second", color: "var(--chart-3)" },
+} satisfies ChartConfig
+const chartData = [
+  { day: "Mon", first: 4, second: 2 },
+  { day: "Tue", first: 6, second: 1 },
+  { day: "Wed", first: 3, second: 4 },
+  { day: "Thu", first: 7, second: 3 },
+  { day: "Fri", first: 5, second: 2 },
+]
 function Gallery() {
   const [file, setFile] = useState<File | null>(null)
   return (
@@ -450,6 +470,28 @@ function Gallery() {
             <Button>Add item</Button>
           </EmptyContent>
         </Empty>
+        <Card>
+          <CardHeader>
+            <CardTitle>Chart</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ChartContainer config={chartConfig} className="h-48 w-full">
+              <BarChart accessibilityLayer data={chartData}>
+                <CartesianGrid vertical={false} />
+                <XAxis dataKey="day" tickLine={false} axisLine={false} />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <ChartLegend content={<ChartLegendContent />} />
+                <Bar dataKey="first" stackId="a" fill="var(--color-first)" />
+                <Bar
+                  dataKey="second"
+                  stackId="a"
+                  fill="var(--color-second)"
+                  radius={[4, 4, 0, 0]}
+                />
+              </BarChart>
+            </ChartContainer>
+          </CardContent>
+        </Card>
         <SignedOut />
         <NotFound />
         <RouteError
