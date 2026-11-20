@@ -57,6 +57,8 @@ export function UserMenu({
             render={
               <SidebarMenuButton
                 size="lg"
+                tooltip={email ?? "Account"}
+                aria-label={email ?? "Account"}
                 className="data-popup-open:bg-sidebar-accent"
               />
             }

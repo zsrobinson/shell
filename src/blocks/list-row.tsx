@@ -17,7 +17,11 @@ export function ListRow({
   children?: ReactNode
 }) {
   return (
-    <Item size="xs" variant="muted" role="listitem">
+    <Item
+      size="xs"
+      className="min-h-11 rounded-none px-0 sm:min-h-9"
+      role="listitem"
+    >
       <ItemContent>
         <ItemTitle>{name}</ItemTitle>
         {detail ? (

@@ -24,7 +24,6 @@
 }
 
 @theme inline {
-  --text-code: 0.8125rem;
   --font-heading: var(--font-sans);
   --font-sans: "Geist Variable", sans-serif;
   --font-mono:
@@ -190,9 +189,11 @@
  * dark  bg black, bg-2 950, ui 900, ui-2 850, ui-3 800, tx-3 700, tx-2 500, tx 200.
  */
 :root {
+  --page-padding: --spacing(4);
+  --section-gap: --spacing(4);
   color-scheme: light;
   --radius: 0.625rem;
-  --background: var(--flexoki-paper);
+  --background: var(--flexoki-50);
   --foreground: var(--flexoki-black);
   --card: var(--flexoki-paper);
   --card-foreground: var(--flexoki-black);
@@ -276,9 +277,9 @@
   }
 }
 
-/* Luma toast shape (style-luma.css .cn-toast). */
+/* Shared toast shape follows the Rhea radius. */
 .cn-toast {
-  @apply rounded-2xl;
+  border-radius: min(var(--radius-4xl), 24px);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -289,4 +290,30 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+@media (min-width: 768px) {
+  :root {
+    --page-padding: --spacing(6);
+  }
+}
+
+@layer base {
+  [role="menuitem"]:not([aria-disabled="true"]),
+  [role="option"]:not([aria-disabled="true"]),
+  [role="tab"]:not(:disabled),
+  [role="switch"]:not(:disabled),
+  select:not(:disabled),
+  [data-sidebar="menu-button"]:not(:disabled),
+  [data-sidebar="menu-sub-button"]:not(:disabled) {
+    cursor: pointer;
+  }
+}
+
+select:not(:disabled),
+option,
+[role="option"]:not([data-disabled]),
+[role="menuitemradio"]:not([data-disabled]),
+[role="menuitemcheckbox"]:not([data-disabled]) {
+  cursor: pointer;
 }

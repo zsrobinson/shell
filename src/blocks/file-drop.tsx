@@ -1,6 +1,6 @@
 import { UploadIcon } from "lucide-react"
 import { useId, useState, type DragEvent } from "react"
-import { cn } from "cn"
+import { cn } from "../lib/utils"
 
 import { formatBytes } from "../lib/format"
 

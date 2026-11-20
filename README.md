@@ -1,7 +1,7 @@
 # shell
 
 The shared frame and building blocks for small internal web apps: official
-shadcn/ui Luma components (Base UI, `base-luma`, pointer cursors), Flexoki,
+shadcn/ui Rhea components (Base UI, `base-rhea`, pointer cursors), Flexoki,
 Geist, an app switcher, theme menu and signed-in account controls.
 
 ## New app
@@ -44,26 +44,25 @@ New app checklist:
 
 ## Export surface
 
-| Import                               | Contents                                                                                                 |
-| ------------------------------------ | -------------------------------------------------------------------------------------------------------- |
-| `@zsrobinson/shell`                  | AppShell, AppIcon, Page, PageHeader, PageTitle, PageMeta, PageActions, theme hooks, toast, app types     |
-| `@zsrobinson/shell/styles.css`       | Tailwind v4, Flexoki tokens, Geist, radii, Luma variants and `text-code` (0.8125rem)                     |
-| `@zsrobinson/shell/ui/*`             | Official Luma primitives: button, card, sidebar, table, field, dialog, and the other UI modules          |
-| `@zsrobinson/shell/blocks/*`         | confirm-action, copy-button, detail-list, list-row, query-error, file-drop, upload-progress, page-states |
-| `@zsrobinson/shell/lib/api`          | ApiError, parseJson, getJson, errorMessage                                                               |
-| `@zsrobinson/shell/lib/format`       | Bytes/MiB, duration, relative/absolute time, percent, count, pluralize, parseTime                        |
-| `@zsrobinson/shell/lib/use-upload`   | Progress, mutation notifications and upload limit; app supplies transport and cache refresh              |
-| `@zsrobinson/shell/hooks/use-mobile` | Mobile breakpoint hook                                                                                   |
-| `@zsrobinson/shell/server`           | createShellServer, mountStatic, serve, ServerOptions, ShellEnv, RequestMetadata                          |
+| Import                               | Contents                                                                                                                                               |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `@zsrobinson/shell`                  | AppShell, AppIcon, Page, PageHeader, PageTitle, PageMeta, PageActions, PageGrid, PageStack, SectionGroup, AppNavigation, theme hooks, toast, app types |
+| `@zsrobinson/shell/styles.css`       | Tailwind v4, Flexoki tokens, Geist, radii, Rhea variants and the standard Tailwind type scale                                                          |
+| `@zsrobinson/shell/ui/*`             | Official Rhea primitives: button, card, sidebar, table, field, dialog, and the other UI modules                                                        |
+| `@zsrobinson/shell/blocks/*`         | confirm-action, copy-button, detail-list, list-row, query-error, file-drop, upload-progress, page-states                                               |
+| `@zsrobinson/shell/lib/api`          | ApiError, parseJson, getJson, errorMessage                                                                                                             |
+| `@zsrobinson/shell/lib/format`       | Bytes/MiB, duration, relative/absolute time, percent, count, pluralize, parseTime                                                                      |
+| `@zsrobinson/shell/lib/use-upload`   | Progress, mutation notifications and upload limit; app supplies transport and cache refresh                                                            |
+| `@zsrobinson/shell/hooks/use-mobile` | Mobile breakpoint hook                                                                                                                                 |
+| `@zsrobinson/shell/server`           | createShellServer, mountStatic, serve, ServerOptions, ShellEnv, RequestMetadata                                                                        |
 
 Import the stylesheet once; the starter's own CSS is only the import and an
-`@source` directive. All theme decisions belong in shell, not app CSS. Pair
-`text-code` with `font-mono`. Supply data and app navigation to AppShell; it has
+`@source` directive. All theme decisions belong in shell, not app CSS. Pair `font-mono` with `text-xs` or `text-sm`. Supply data and app navigation to AppShell; it has
 no hostname or service inventory built in. QueryError accepts any error and
 never imports an app's API module. NotFound accepts an optional `homeLabel`.
 
 The UI components were generated with
-`shadcn init --preset b1GxuTvxQ --template vite --pointer`, then `shadcn add`.
+`shadcn init --preset b27GcrRo --template vite --pointer`, then `shadcn add`.
 Their imports are relative, centered dialogs have transparent overlays, Sonner
 uses the shared theme, and use-mobile reads its media query synchronously.
 `src/shadcn-tailwind.css` and `src/flexoki.css` retain their upstream contents.
@@ -122,3 +121,32 @@ The in-repository starter installs a packed local copy of shell (`install-links`
 in its `.npmrc`) so React and its types are shared with the app. After editing
 shell, refresh that copy with `npm ci --prefix starter`. CI checks types, lint,
 formatting, tests, CSS generation, and the starter build.
+
+## Layout and navigation
+
+AppShell accepts `navGroups`: items provide router links, labels, icons, active
+state, status, player/count badges and registered actions. Only the active
+entity expands. Rail tiles open page flyouts, and the active entity's page icons
+remain below a separator. Item `onSelect` callbacks power the shared command
+palette; destructive actions should open an app-owned confirmation.
+
+`entityBar` supplies the active entity, its status and page. Shell renders a
+sticky 48px bar, desktop entity actions, a phone page menu and compact action
+menu. The phone sheet switches entities and apps. The existing `nav` slot and
+`breadcrumbs` remain available for apps without entities.
+
+Page owns `p-4 md:p-6`, `gap-4`, a left-anchored max-w-5xl column and text-xl
+page titles. Rhea cards keep their generated 20px spacing; only nested cards
+use size=sm. PageGrid defaults to one column; two columns are for comparable
+content. Page viewport reserves the space below the sticky 48px entity bar for
+applications such as a console, with scrolling owned by its inner pane. SectionGroup now behaves as PageStack so unrelated topics retain
+separate surfaces. Detail rows are 36px on desktop and 44px below sm.
+
+The UI files are generated Base UI Rhea components. Adaptations are relative
+imports, the local clsx/tailwind-merge helper, pointer cursors on interactive
+items, transparent dialog overlays, the shared Sonner theme and synchronous
+use-mobile. Flexoki, Geist, the radius scale and data-hue remain centralized.
+
+Use `Page viewport` for workspaces such as a console: it fills the space below the sticky 48px entity bar. Its content must use `min-h-0` and scroll internally; ordinary pages retain the shared 5xl content column.
+
+Use `FormStack` inside `Page` for form topics: it keeps the shared left edge and caps fields at 3xl, while lists and overview grids use the full content width.

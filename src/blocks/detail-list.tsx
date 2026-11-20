@@ -1,5 +1,5 @@
 import type { ComponentProps, ReactNode } from "react"
-import { cn } from "cn"
+import { cn } from "../lib/utils"
 
 /** Label and value rows, the dense layout used across detail cards. */
 export function DetailList({ className, ...props }: ComponentProps<"dl">) {
@@ -26,7 +26,7 @@ export function DetailRow({
   return (
     <div
       className={cn(
-        "flex min-h-11 items-center justify-between gap-4 py-2",
+        "flex min-h-11 items-center justify-between gap-4 py-2 sm:min-h-9",
         className
       )}
     >

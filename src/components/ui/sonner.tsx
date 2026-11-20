@@ -1,5 +1,3 @@
-"use client"
-
 import { useResolvedTheme } from "../../theme"
 import { Toaster as Sonner, type ToasterProps } from "sonner"
 import {
@@ -15,7 +13,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
 
   return (
     <Sonner
-      theme={theme}
+      theme={theme as ToasterProps["theme"]}
       className="toaster group"
       icons={{
         success: <CircleCheckIcon className="size-4" />,

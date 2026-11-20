@@ -2,16 +2,12 @@ import {
   createRootRouteWithContext,
   Link,
   Outlet,
+  useNavigate,
+  useLocation,
 } from "@tanstack/react-router"
 import { useQuery, type QueryClient } from "@tanstack/react-query"
 import { AppShell, type AppLink } from "@zsrobinson/shell"
-import {
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
-} from "@zsrobinson/shell/ui/sidebar"
+import { ListIcon, ShapesIcon } from "lucide-react"
 import {
   NotFound,
   RouteError,
@@ -26,6 +22,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   }
 )
 function Root() {
+  const navigate = useNavigate()
+  const pathname = useLocation({ select: (l) => l.pathname })
   const session = useQuery({
     queryKey: ["session"],
     queryFn: () =>
@@ -44,21 +42,29 @@ function Root() {
         name="Example"
         email={session.data?.email}
         apps={session.data?.services}
-        nav={
-          <SidebarGroup>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {(["/", "/components"] as const).map((to) => (
-                  <SidebarMenuItem key={to}>
-                    <SidebarMenuButton render={<Link to={to} />}>
-                      {to === "/" ? "Items" : "Components"}
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        }
+        navGroups={[
+          {
+            id: "main",
+            items: [
+              {
+                id: "items",
+                label: "Items",
+                icon: <ListIcon />,
+                render: <Link to="/" />,
+                onSelect: () => void navigate({ to: "/" }),
+                active: pathname === "/",
+              },
+              {
+                id: "components",
+                label: "Components",
+                icon: <ShapesIcon />,
+                render: <Link to="/components" />,
+                onSelect: () => void navigate({ to: "/components" }),
+                active: pathname === "/components",
+              },
+            ],
+          },
+        ]}
       >
         {session.error instanceof ApiError && session.error.status === 401 ? (
           <SignedOut />

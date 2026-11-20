@@ -38,8 +38,10 @@ export function AppSwitcher({
           <DropdownMenuTrigger
             render={
               <SidebarMenuButton
-                size="lg"
-                className="data-popup-open:bg-sidebar-accent"
+                size="default"
+                tooltip={name}
+                aria-label={name}
+                className="h-10 data-popup-open:bg-sidebar-accent"
               />
             }
           >
@@ -47,6 +49,7 @@ export function AppSwitcher({
               name={name}
               icon={icon ?? current?.icon}
               colour={current?.colour}
+              className="size-8 rounded-[calc(var(--radius)*0.5)]"
             />
             <span className="flex-1 truncate font-medium">{name}</span>
             <ChevronsUpDownIcon className="text-muted-foreground" />
