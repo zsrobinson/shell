@@ -12,7 +12,13 @@ import {
   CommandSeparator,
 } from "../components/ui/command"
 import { type NavGroup, selectNavLink } from "./navigation"
-export function CommandPalette({ groups }: { groups: NavGroup[] }) {
+export function CommandPalette({
+  groups,
+  placeholder = "Jump to a server or page…",
+}: {
+  groups: NavGroup[]
+  placeholder?: string
+}) {
   const [open, setOpen] = useState(false)
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
@@ -41,7 +47,7 @@ export function CommandPalette({ groups }: { groups: NavGroup[] }) {
         description="Pages and entity actions"
       >
         <Command>
-          <CommandInput placeholder="Jump to a server or page…" />
+          <CommandInput placeholder={placeholder} />
           <CommandList>
             <CommandEmpty>No matches</CommandEmpty>
             {groups.map((group) => (

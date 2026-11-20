@@ -36,6 +36,8 @@ export type AppShellProps = {
   navGroups?: NavGroup[]
   breadcrumbs?: ReactNode
   entityBar?: EntityBar
+  /** Names what the command palette finds, for example servers and pages. */
+  searchPlaceholder?: string
   children: ReactNode
 }
 export function AppShell({
@@ -48,6 +50,7 @@ export function AppShell({
   navGroups,
   breadcrumbs,
   entityBar,
+  searchPlaceholder,
   children,
 }: AppShellProps) {
   const entity = entityBar?.entity
@@ -155,7 +158,12 @@ export function AppShell({
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : null}
-            {navGroups ? <CommandPalette groups={navGroups} /> : null}
+            {navGroups ? (
+              <CommandPalette
+                groups={navGroups}
+                placeholder={searchPlaceholder}
+              />
+            ) : null}
           </header>
           <ContentAnchor>{children}</ContentAnchor>
         </SidebarInset>
