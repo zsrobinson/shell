@@ -14,3 +14,10 @@ execFileSync("npm", ["install"], {
   cwd: new URL("..", import.meta.url),
   stdio: "inherit",
 })
+
+// npm canonicalizes hosted Git URLs to SSH in some versions. Keep installs public.
+const lockFile = new URL("../package-lock.json", import.meta.url)
+const lock = JSON.parse(readFileSync(lockFile, "utf8"))
+lock.packages["node_modules/@zsrobinson/shell"].resolved =
+  `git+${repository}#${sha}`
+writeFileSync(lockFile, JSON.stringify(lock, null, 2) + "\n")
