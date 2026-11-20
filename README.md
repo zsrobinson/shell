@@ -169,3 +169,20 @@ Vite apps must add `"recharts"` to `optimizeDeps.include` (as the starter does),
 because shell ships source and excludes itself from prebundling. This bundles
 Recharts' CommonJS selector dependencies correctly in development. Keep existing
 `use-sync-external-store/shim` entries. See `/components` for chart examples.
+
+`ChartRangeSelect` also accepts a caller-supplied `ranges` array of
+`{ value, label, duration }`, where duration is seconds or `"all"`. Its value and
+change callback infer the caller's string union; the default remains 1h/24h/7d/30d.
+For calendar ranges such as YTD, compute duration from the chosen start date in
+the consuming app. For example:
+
+```tsx
+<ChartRangeSelect
+  value={range}
+  onChange={setRange}
+  ranges={[
+    { value: "1M", label: "1 month", duration: 30 * 86400 },
+    { value: "All", label: "All", duration: "all" },
+  ]}
+/>
+```

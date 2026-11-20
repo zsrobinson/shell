@@ -24,29 +24,40 @@ export const chartNumber = (value: number) =>
     maximumFractionDigits: 1,
     notation: Math.abs(value) >= 10000 ? "compact" : "standard",
   }).format(value)
-export function ChartRangeSelect({
+export type ChartRangeOption<T extends string = string> = {
+  value: T
+  label: string
+  /** Seconds, or all available history. Calendar ranges can be resolved by the caller. */
+  duration: number | "all"
+}
+export const defaultChartRanges: readonly ChartRangeOption<ChartRange>[] = [
+  { value: "1h", label: "Last hour", duration: 3600 },
+  { value: "24h", label: "Last 24 hours", duration: 86400 },
+  { value: "7d", label: "Last 7 days", duration: 604800 },
+  { value: "30d", label: "Last 30 days", duration: 2592000 },
+]
+export function ChartRangeSelect<T extends string = ChartRange>({
   value,
   onChange,
+  ranges = defaultChartRanges as unknown as readonly ChartRangeOption<T>[],
 }: {
-  value: ChartRange
-  onChange: (value: ChartRange) => void
+  value: T
+  onChange: (value: T) => void
+  ranges?: readonly ChartRangeOption<T>[]
 }) {
   return (
     <select
       aria-label="Chart time range"
       className="h-8 rounded-lg border bg-background px-2 text-sm"
       value={value}
-      onChange={(e) => onChange(e.target.value as ChartRange)}
+      onChange={(e) => {
+        const selected = ranges.find((r) => r.value === e.target.value)
+        if (selected) onChange(selected.value)
+      }}
     >
-      {(["1h", "24h", "7d", "30d"] as const).map((r) => (
-        <option key={r} value={r}>
-          {r === "1h"
-            ? "Last hour"
-            : r === "24h"
-              ? "Last 24 hours"
-              : r === "7d"
-                ? "Last 7 days"
-                : "Last 30 days"}
+      {ranges.map((r) => (
+        <option key={r.value} value={r.value}>
+          {r.label}
         </option>
       ))}
     </select>
