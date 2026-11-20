@@ -1,3 +1,10 @@
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@zsrobinson/shell/ui/select"
 import { useLayoutEffect, useState } from "react"
 import { createFileRoute } from "@tanstack/react-router"
 import {
@@ -289,6 +296,15 @@ function Gallery() {
             </InputGroup>
           </FieldGroup>
         </FieldSet>
+        <Select defaultValue="example">
+          <SelectTrigger aria-label="Select example">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="example">Example</SelectItem>
+            <SelectItem value="other">Other</SelectItem>
+          </SelectContent>
+        </Select>
         <Separator />
         <Tabs defaultValue="details">
           <TabsList>
@@ -299,7 +315,7 @@ function Gallery() {
             <DetailList>
               <DetailRow label="Size">1.0 MiB</DetailRow>
               <DetailRow label="Address">
-                <span className="font-mono text-code">example.test</span>
+                <span className="font-mono text-xs">example.test</span>
                 <CopyButton value="example.test" label="Copy address" />
               </DetailRow>
               <DetailRow label="Updated">

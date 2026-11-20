@@ -2,6 +2,8 @@ import {
   createRootRouteWithContext,
   Link,
   Outlet,
+  useNavigate,
+  useLocation,
 } from "@tanstack/react-router"
 import { useQuery, type QueryClient } from "@tanstack/react-query"
 import { AppShell, type AppLink } from "@zsrobinson/shell"
@@ -20,6 +22,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   }
 )
 function Root() {
+  const navigate = useNavigate()
+  const pathname = useLocation({ select: (l) => l.pathname })
   const session = useQuery({
     queryKey: ["session"],
     queryFn: () =>
@@ -47,12 +51,16 @@ function Root() {
                 label: "Items",
                 icon: <ListIcon />,
                 render: <Link to="/" />,
+                onSelect: () => void navigate({ to: "/" }),
+                active: pathname === "/",
               },
               {
                 id: "components",
                 label: "Components",
                 icon: <ShapesIcon />,
                 render: <Link to="/components" />,
+                onSelect: () => void navigate({ to: "/components" }),
+                active: pathname === "/components",
               },
             ],
           },

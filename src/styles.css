@@ -24,7 +24,6 @@
 }
 
 @theme inline {
-  --text-code: 0.8125rem;
   --font-heading: var(--font-sans);
   --font-sans: "Geist Variable", sans-serif;
   --font-mono:
@@ -194,7 +193,7 @@
   --section-gap: --spacing(4);
   color-scheme: light;
   --radius: 0.625rem;
-  --background: var(--flexoki-paper);
+  --background: var(--flexoki-50);
   --foreground: var(--flexoki-black);
   --card: var(--flexoki-paper);
   --card-foreground: var(--flexoki-black);
@@ -278,9 +277,9 @@
   }
 }
 
-/* Luma toast shape (style-luma.css .cn-toast). */
+/* Shared toast shape follows the Rhea radius. */
 .cn-toast {
-  @apply rounded-2xl;
+  border-radius: min(var(--radius-4xl), 24px);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -297,4 +296,24 @@
   :root {
     --page-padding: --spacing(6);
   }
+}
+
+@layer base {
+  [role="menuitem"]:not([aria-disabled="true"]),
+  [role="option"]:not([aria-disabled="true"]),
+  [role="tab"]:not(:disabled),
+  [role="switch"]:not(:disabled),
+  select:not(:disabled),
+  [data-sidebar="menu-button"]:not(:disabled),
+  [data-sidebar="menu-sub-button"]:not(:disabled) {
+    cursor: pointer;
+  }
+}
+
+select:not(:disabled),
+option,
+[role="option"]:not([data-disabled]),
+[role="menuitemradio"]:not([data-disabled]),
+[role="menuitemcheckbox"]:not([data-disabled]) {
+  cursor: pointer;
 }

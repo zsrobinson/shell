@@ -27,4 +27,9 @@ export {
   type NavGroup,
   type NavItem,
   type NavLink,
+  type NavAction,
 } from "./app/navigation"
+
+export { cn } from "./lib/utils"
+
+export type { EntityBar } from "./app/app-shell"

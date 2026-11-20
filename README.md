@@ -1,7 +1,7 @@
 # shell
 
 The shared frame and building blocks for small internal web apps: official
-shadcn/ui Luma components (Base UI, `base-luma`, pointer cursors), Flexoki,
+shadcn/ui Rhea components (Base UI, `base-rhea`, pointer cursors), Flexoki,
 Geist, an app switcher, theme menu and signed-in account controls.
 
 ## New app
@@ -47,8 +47,8 @@ New app checklist:
 | Import                               | Contents                                                                                                                                               |
 | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `@zsrobinson/shell`                  | AppShell, AppIcon, Page, PageHeader, PageTitle, PageMeta, PageActions, PageGrid, PageStack, SectionGroup, AppNavigation, theme hooks, toast, app types |
-| `@zsrobinson/shell/styles.css`       | Tailwind v4, Flexoki tokens, Geist, radii, Luma variants and `text-code` (0.8125rem)                                                                   |
-| `@zsrobinson/shell/ui/*`             | Official Luma primitives: button, card, sidebar, table, field, dialog, and the other UI modules                                                        |
+| `@zsrobinson/shell/styles.css`       | Tailwind v4, Flexoki tokens, Geist, radii, Rhea variants and the standard Tailwind type scale                                                          |
+| `@zsrobinson/shell/ui/*`             | Official Rhea primitives: button, card, sidebar, table, field, dialog, and the other UI modules                                                        |
 | `@zsrobinson/shell/blocks/*`         | confirm-action, copy-button, detail-list, list-row, query-error, file-drop, upload-progress, page-states                                               |
 | `@zsrobinson/shell/lib/api`          | ApiError, parseJson, getJson, errorMessage                                                                                                             |
 | `@zsrobinson/shell/lib/format`       | Bytes/MiB, duration, relative/absolute time, percent, count, pluralize, parseTime                                                                      |
@@ -57,13 +57,12 @@ New app checklist:
 | `@zsrobinson/shell/server`           | createShellServer, mountStatic, serve, ServerOptions, ShellEnv, RequestMetadata                                                                        |
 
 Import the stylesheet once; the starter's own CSS is only the import and an
-`@source` directive. All theme decisions belong in shell, not app CSS. Pair
-`text-code` with `font-mono`. Supply data and app navigation to AppShell; it has
+`@source` directive. All theme decisions belong in shell, not app CSS. Pair `font-mono` with `text-xs` or `text-sm`. Supply data and app navigation to AppShell; it has
 no hostname or service inventory built in. QueryError accepts any error and
 never imports an app's API module. NotFound accepts an optional `homeLabel`.
 
 The UI components were generated with
-`shadcn init --preset b1GxuTvxQ --template vite --pointer`, then `shadcn add`.
+`shadcn init --preset b27GcrRo --template vite --pointer`, then `shadcn add`.
 Their imports are relative, centered dialogs have transparent overlays, Sonner
 uses the shared theme, and use-mobile reads its media query synchronously.
 `src/shadcn-tailwind.css` and `src/flexoki.css` retain their upstream contents.
@@ -125,16 +124,24 @@ formatting, tests, CSS generation, and the starter build.
 
 ## Layout and navigation
 
-AppShell accepts `navGroups`: groups of items with stable IDs, labels, icons,
-active state and a `render` router link or anchor. Items can have child links.
-The shell renders the real SidebarMenuSub, opens the current item by default,
-closes the phone sheet after navigation, and expands a selected item from the
-desktop icon rail. The existing `nav` slot remains available for custom content.
-Routing and domain data stay in the app.
+AppShell accepts `navGroups`: items provide router links, labels, icons, active
+state, status, player/count badges and registered actions. Only the active
+entity expands. Rail tiles open page flyouts, and the active entity's page icons
+remain below a separator. Item `onSelect` callbacks power the shared command
+palette; destructive actions should open an app-owned confirmation.
 
-Page owns the shared padding and spacing scale: 16px on phones, 24px page
-padding on desktop, and 16px between sections and inside cards. PageGrid offers
-two equal columns or a wide primary column; PageStack aligns vertical sections.
-SectionGroup joins related real Card components into a single Luma surface
-with separators. Page also aligns card headers and table/list row density.
-Keep independent tasks in separate groups and workflows on real pages.
+`entityBar` supplies the active entity, its status and page. Shell renders a
+sticky 48px bar, desktop entity actions, a phone page menu and compact action
+menu. The phone sheet switches entities and apps. The existing `nav` slot and
+`breadcrumbs` remain available for apps without entities.
+
+Page owns `p-4 md:p-6`, `gap-4`, a left-anchored max-w-3xl column and text-xl
+page titles. Rhea cards keep their generated 20px spacing; only nested cards
+use size=sm. PageGrid defaults to one column; two columns are for comparable
+content. SectionGroup now behaves as PageStack so unrelated topics retain
+separate surfaces. Detail rows are 36px on desktop and 44px below sm.
+
+The UI files are generated Base UI Rhea components. Adaptations are relative
+imports, the local clsx/tailwind-merge helper, pointer cursors on interactive
+items, transparent dialog overlays, the shared Sonner theme and synchronous
+use-mobile. Flexoki, Geist, the radius scale and data-hue remain centralized.

@@ -16,7 +16,7 @@ function Detail() {
       <PageTitle>{item.name}</PageTitle>
       <DetailList>
         <DetailRow label="ID">
-          <code className="font-mono text-code">{item.id}</code>
+          <code className="font-mono text-xs">{item.id}</code>
         </DetailRow>
       </DetailList>
     </Page>

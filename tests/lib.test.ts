@@ -46,3 +46,12 @@ test("generic formatting boundaries", () => {
   assert.equal(formatDateTime("bad"), "—")
   assert.equal(formatRelative("2026-01-01", Date.UTC(2026, 0, 1)), "just now")
 })
+
+test("class merging uses standard conditional and Tailwind precedence", async () => {
+  const { cn } = await import("../src/lib/utils")
+  assert.equal(cn("p-4", false, { block: true }, "p-2"), "block p-2")
+  assert.equal(
+    cn("text-sm", "text-xs", "hover:bg-muted", "hover:bg-accent"),
+    "text-xs hover:bg-accent"
+  )
+})
