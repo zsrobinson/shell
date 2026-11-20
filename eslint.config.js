@@ -4,7 +4,14 @@ import globals from "globals"
 import tseslint from "typescript-eslint"
 
 export default tseslint.config(
-  { ignores: ["node_modules"] },
+  {
+    ignores: [
+      "node_modules",
+      "starter/node_modules",
+      "starter/dist",
+      "starter/src/routeTree.gen.ts",
+    ],
+  },
   {
     files: ["**/*.{ts,tsx}"],
     extends: [
@@ -12,6 +19,6 @@ export default tseslint.config(
       tseslint.configs.recommended,
       reactHooks.configs.flat.recommended,
     ],
-    languageOptions: { globals: globals.browser },
+    languageOptions: { globals: { ...globals.browser, ...globals.node } },
   }
 )
