@@ -190,7 +190,12 @@ export function TrendChart({
           />
         )}
         {!sparkline && Object.keys(config).length > 1 && (
-          <ChartLegend content={<ChartLegendContent />} />
+          <ChartLegend
+            content={
+              // Whole items wrap to new rows; labels never break mid-name.
+              <ChartLegendContent className="flex-wrap gap-x-4 gap-y-1.5 [&>div]:whitespace-nowrap" />
+            }
+          />
         )}
         {negative && (
           <ReferenceLine y={0} stroke="var(--border)" strokeWidth={1} />
