@@ -16,6 +16,8 @@ export type ServerOptions = {
   audience: string
   publicOrigin: string
   services: () => unknown | Promise<unknown>
+  /** For an embedded same-origin component gallery. Defaults to frame-ancestors none. */
+  allowSameOriginFrames?: boolean
   /** Receives only bounded metadata. Defaults to one JSON line on stdout. */
   log?: (metadata: RequestMetadata) => void
   /** Scraping is opt-in and should be restricted to the private monitoring network. */
@@ -26,6 +28,15 @@ export type ServerOptions = {
 export function createShellServer(options: ServerOptions) {
   const app = new Hono<ShellEnv>()
   app.onError((_error, c) => c.json({ error: "Internal server error" }, 500))
+  app.use("*", async (c, next) => {
+    c.header("X-Content-Type-Options", "nosniff")
+    c.header("Referrer-Policy", "same-origin")
+    c.header(
+      "Content-Security-Policy",
+      `default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors ${options.allowSameOriginFrames ? "'self'" : "'none'"}; base-uri 'self'; form-action 'self'`
+    )
+    await next()
+  })
   const keys = createRemoteJWKSet(
     new URL("/cdn-cgi/access/certs", options.issuer)
   )

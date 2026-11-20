@@ -54,7 +54,17 @@ test("Access, Origin, session, cache boundaries and metadata-only observability"
   mountStatic(app, relative(process.cwd(), dir))
   const headers = { "Cf-Access-Jwt-Assertion": await token() }
   try {
-    assert.equal((await app.request("/api/session")).status, 401)
+    const unauthenticated = await app.request("/api/session")
+    assert.equal(unauthenticated.status, 401)
+    assert.equal(
+      unauthenticated.headers.get("X-Content-Type-Options"),
+      "nosniff"
+    )
+    assert.equal(unauthenticated.headers.get("Referrer-Policy"), "same-origin")
+    assert.match(
+      unauthenticated.headers.get("Content-Security-Policy") || "",
+      /frame-ancestors 'none'/
+    )
     for (const invalid of [
       await token("wrong"),
       await token("app", null),
