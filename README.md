@@ -48,7 +48,7 @@ New app checklist:
 | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `@zsrobinson/shell`                  | AppShell, AppIcon, Page, PageHeader, PageTitle, PageMeta, PageActions, PageGrid, PageStack, SectionGroup, AppNavigation, theme hooks, toast, app types |
 | `@zsrobinson/shell/styles.css`       | Tailwind v4, Flexoki tokens, Geist, radii, Rhea variants and the standard Tailwind type scale                                                          |
-| `@zsrobinson/shell/ui/*`             | Official Rhea primitives: button, card, sidebar, table, field, dialog, and the other UI modules                                                        |
+| `@zsrobinson/shell/ui/*`             | Official Rhea primitives: button, card, chart, sidebar, table, field, dialog, and the other UI modules                                                 |
 | `@zsrobinson/shell/blocks/*`         | confirm-action, copy-button, detail-list, list-row, query-error, file-drop, upload-progress, page-states                                               |
 | `@zsrobinson/shell/lib/api`          | ApiError, parseJson, getJson, errorMessage                                                                                                             |
 | `@zsrobinson/shell/lib/format`       | Bytes/MiB, duration, relative/absolute time, percent, count, pluralize, parseTime                                                                      |
@@ -63,6 +63,8 @@ never imports an app's API module. NotFound accepts an optional `homeLabel`.
 
 The UI components were generated with
 `shadcn init --preset b27GcrRo --template vite --pointer`, then `shadcn add`.
+Chart is the official Recharts wrapper; apps that draw charts also depend on
+`recharts` directly and colour series with the `--chart-1` to `--chart-5` hue scale.
 Their imports are relative, centered dialogs have transparent overlays, Sonner
 uses the shared theme, and use-mobile reads its media query synchronously.
 `src/shadcn-tailwind.css` and `src/flexoki.css` retain their upstream contents.

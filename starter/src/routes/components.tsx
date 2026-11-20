@@ -36,6 +36,13 @@ import {
   CardAction,
 } from "@zsrobinson/shell/ui/card"
 import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from "@zsrobinson/shell/ui/chart"
+import { Bar, BarChart, CartesianGrid, XAxis } from "recharts"
+import {
   Dialog,
   DialogTrigger,
   DialogContent,
@@ -192,6 +199,16 @@ function Components() {
     </Page>
   )
 }
+const chartData = [
+  { day: "Mon", requests: 186 },
+  { day: "Tue", requests: 305 },
+  { day: "Wed", requests: 237 },
+  { day: "Thu", requests: 173 },
+  { day: "Fri", requests: 209 },
+]
+const chartConfig = {
+  requests: { label: "Requests", color: "var(--chart-1)" },
+} satisfies ChartConfig
 function Gallery() {
   const [file, setFile] = useState<File | null>(null)
   return (
@@ -236,6 +253,25 @@ function Gallery() {
               <Kbd>K</Kbd>
             </KbdGroup>
           </CardFooter>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Chart</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ChartContainer config={chartConfig} className="h-48 w-full">
+              <BarChart accessibilityLayer data={chartData}>
+                <CartesianGrid vertical={false} />
+                <XAxis dataKey="day" tickLine={false} axisLine={false} />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Bar
+                  dataKey="requests"
+                  fill="var(--color-requests)"
+                  radius={6}
+                />
+              </BarChart>
+            </ChartContainer>
+          </CardContent>
         </Card>
         <Breadcrumb>
           <BreadcrumbList>
