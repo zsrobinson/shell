@@ -269,7 +269,8 @@
     --negative: var(--flexoki-red-400);
     --chart-positive: var(--flexoki-green-400);
     --chart-negative: var(--flexoki-red-600);
-    --chart-neutral: var(--flexoki-700);
+    /* Baselines and "Other" stay legible on the dark card. */
+    --chart-neutral: var(--flexoki-600);
     --sidebar: var(--flexoki-950);
     --sidebar-foreground: var(--flexoki-200);
     --sidebar-primary: var(--hue-dark);

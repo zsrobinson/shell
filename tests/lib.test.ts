@@ -37,6 +37,7 @@ test("generic formatting boundaries", () => {
   assert.equal(formatPercent(9.25), "9.3%")
   assert.equal(pluralize(1, "file"), "1 file")
   assert.equal(pluralize(2, "file"), "2 files")
+  assert.equal(pluralize(1681, "file"), (1681).toLocaleString() + " files")
   assert.ok(formatCount(1200))
   assert.equal(
     parseTime("20261120T163807Z-ab12"),
