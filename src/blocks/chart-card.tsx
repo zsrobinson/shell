@@ -207,8 +207,15 @@ export function TrendChart({
   formatTimeTick?: (time: number) => string
   /** `linear` draws straight segments that never overshoot the data. */
   curve?: "monotone" | "linear"
-  /** Labelled horizontal lines such as a budget or target, in neutral ink. */
-  references?: { value: number; label?: string; side?: "left" | "right" }[]
+  /**
+   * Labelled horizontal lines such as a budget or target, in neutral ink.
+   * `side: "axis"` puts the label in the value-axis gutter, clear of bars.
+   */
+  references?: {
+    value: number
+    label?: string
+    side?: "left" | "right" | "axis"
+  }[]
   /**
    * Labelled times such as a target date: a vertical line on an area chart,
    * a shaded bar on a bar chart (for example a month still in progress).
@@ -465,9 +472,11 @@ export function TrendChart({
                     ? {
                         value: r.label,
                         position:
-                          r.side === "left"
-                            ? "insideTopLeft"
-                            : "insideTopRight",
+                          r.side === "axis"
+                            ? "left"
+                            : r.side === "left"
+                              ? "insideTopLeft"
+                              : "insideTopRight",
                         ...LINE_LABEL,
                       }
                     : undefined
