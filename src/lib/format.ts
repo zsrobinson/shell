@@ -73,8 +73,9 @@ export function formatPercent(value: number) {
   return `${value.toFixed(value < 10 ? 1 : 0)}%`
 }
 
+/** "1 item", "1,681 items": counts carry digit grouping. */
 export function pluralize(count: number, singular: string, plural?: string) {
-  return `${count} ${count === 1 ? singular : (plural ?? singular + "s")}`
+  return `${count.toLocaleString()} ${count === 1 ? singular : (plural ?? singular + "s")}`
 }
 
 const compact = new Intl.NumberFormat(undefined, {

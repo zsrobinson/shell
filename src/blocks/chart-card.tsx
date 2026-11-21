@@ -1,8 +1,18 @@
+import { useLayoutEffect, useState } from "react"
 import {
   chartTimestamp,
   chartTooltipTime,
   formatChartTime,
 } from "../lib/chart-time"
+import {
+  everyNth,
+  fitTimeTicks,
+  formatTimeTick as formatTickTime,
+  labelWidth,
+  niceTicks,
+  timeTicks,
+  type NiceScale,
+} from "../lib/chart-ticks"
 import {
   Area,
   AreaChart,
@@ -13,6 +23,7 @@ import {
   Label,
   Pie,
   PieChart,
+  ReferenceArea,
   ReferenceLine,
   XAxis,
   YAxis,
@@ -74,6 +85,78 @@ export function ChartRangeSelect<T extends string = ChartRange>({
     </select>
   )
 }
+/** The rendered size of an element, following resizes; pass `ref` to it. */
+function useElementSize<T extends HTMLElement>() {
+  const [element, ref] = useState<T | null>(null)
+  const [size, setSize] = useState<{ width: number; height: number } | null>(
+    null
+  )
+  useLayoutEffect(() => {
+    if (!element) return
+    const measure = () => {
+      const r = element.getBoundingClientRect()
+      setSize((prev) =>
+        prev && prev.width === r.width && prev.height === r.height
+          ? prev
+          : { width: r.width, height: r.height }
+      )
+    }
+    measure()
+    const observer = new ResizeObserver(measure)
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [element])
+  return [ref, size] as const
+}
+
+// A halo in the card colour keeps line labels legible over bars and areas.
+const LINE_LABEL = {
+  fill: "var(--muted-foreground)",
+  fontSize: 11,
+  stroke: "var(--card)",
+  strokeWidth: 3,
+  paintOrder: "stroke",
+} as const
+
+const Y_AXIS_WIDTH = 72
+const MARGIN = { left: 0, right: 12, top: 12, bottom: 0 }
+const X_AXIS_HEIGHT = 30
+const LEGEND_HEIGHT = 32
+
+/** Lowest and highest plotted value, stacking by sign when series stack. */
+function valueExtent(
+  data: ChartPoint[],
+  keys: string[],
+  stacked: boolean
+): [number, number] | null {
+  let lo = Infinity
+  let hi = -Infinity
+  for (const p of data) {
+    if (stacked) {
+      let pos = 0
+      let neg = 0
+      let any = false
+      for (const k of keys) {
+        const v = p[k]
+        if (v == null) continue
+        any = true
+        if (v >= 0) pos += v
+        else neg += v
+      }
+      if (!any) continue
+      lo = Math.min(lo, neg, pos)
+      hi = Math.max(hi, pos, neg)
+    } else
+      for (const k of keys) {
+        const v = p[k]
+        if (v == null) continue
+        lo = Math.min(lo, v)
+        hi = Math.max(hi, v)
+      }
+  }
+  return lo === Infinity ? null : [lo, hi]
+}
+
 export function TrendChart({
   data,
   config,
@@ -90,7 +173,11 @@ export function TrendChart({
   formatTimeTick,
   curve = "monotone",
   references = [],
+  markers = [],
   dashed = [],
+  timeTicks: fixedTimeTicks,
+  utc = false,
+  legend: showLegend,
 }: {
   data: ChartPoint[]
   config: ChartConfig
@@ -101,9 +188,9 @@ export function TrendChart({
   sparkline?: boolean
   /** Stack series; bars stack by sign so negative series grow below zero. */
   stacked?: boolean
-  /** Formats `time` (epoch milliseconds) for ticks and the tooltip heading. */
+  /** Formats `time` (epoch milliseconds) for the tooltip heading, and bar ticks. */
   formatTime?: (time: number) => string
-  /** Overrides the chart height, for example `h-40`. */
+  /** Overrides the chart height, for example `h-40`, or `h-full min-h-56` to fill a card. */
   className?: string
   /**
    * `zero` anchors the value axis at zero; `data` fits it to the series, for
@@ -113,23 +200,35 @@ export function TrendChart({
   baseline?: "zero" | "data"
   /** Value-axis ticks, usually rounder than `format`, which the tooltip keeps. */
   formatTick?: (value: number) => string
-  /** Time-axis ticks, for example months on a daily series; the tooltip keeps `formatTime`. */
+  /**
+   * Time-axis labels. Area charts otherwise label their calendar-aligned
+   * ticks by unit (hours, days, months, years); bar charts use `formatTime`.
+   */
   formatTimeTick?: (time: number) => string
   /** `linear` draws straight segments that never overshoot the data. */
   curve?: "monotone" | "linear"
   /** Labelled horizontal lines such as a budget or target, in neutral ink. */
-  references?: { value: number; label?: string }[]
+  references?: { value: number; label?: string; side?: "left" | "right" }[]
+  /**
+   * Labelled times such as a target date: a vertical line on an area chart,
+   * a shaded bar on a bar chart (for example a month still in progress).
+   */
+  markers?: { time: number; label?: string }[]
   /** Series keys drawn as dashed lines without fill, such as a projection. */
   dashed?: string[]
+  /** Exact time-axis ticks, for a `time` that is not a timestamp (such as day of month). */
+  timeTicks?: number[]
+  /** Times are calendar dates at UTC midnight; ticks and labels use UTC. */
+  utc?: boolean
+  /** Name the series below the chart; on by default for two or more. */
+  legend?: boolean
 }) {
   const height = className ?? (sparkline ? "h-12" : "h-56")
-  const negative = data.some((p) =>
-    Object.keys(config).some((k) => (p[k] ?? 0) < 0)
-  )
-  if (
-    loading ||
-    !data.some((p) => Object.keys(config).some((k) => p[k] != null))
-  )
+  const [ref, size] = useElementSize<HTMLDivElement>()
+  const keys = Object.keys(config)
+  const negative = data.some((p) => keys.some((k) => (p[k] ?? 0) < 0))
+  const empty = !data.some((p) => keys.some((k) => p[k] != null))
+  if (loading || empty)
     return (
       <div
         role="status"
@@ -139,152 +238,270 @@ export function TrendChart({
       </div>
     )
   const Plot = kind === "bar" ? BarChart : AreaChart
+  const legend = !sparkline && (showLegend ?? keys.length > 1)
+  const width = size?.width ?? 600
+  const plotWidth = Math.max(80, width - Y_AXIS_WIDTH - MARGIN.right)
+  const plotHeight = Math.max(
+    60,
+    (size?.height ?? 224) -
+      X_AXIS_HEIGHT -
+      MARGIN.top -
+      (legend ? LEGEND_HEIGHT : 0)
+  )
+
+  // Value axis: round steps on a domain that hugs the data (and any lines).
+  const extent = valueExtent(data, keys, stacked)
+  let yScale: NiceScale | undefined
+  if (extent && !sparkline) {
+    let [lo, hi] = extent
+    for (const r of references) {
+      lo = Math.min(lo, r.value)
+      hi = Math.max(hi, r.value)
+    }
+    if (baseline === "zero" || kind === "bar" || stacked) {
+      lo = Math.min(0, lo)
+      hi = Math.max(0, hi)
+    }
+    const maxTicks = Math.min(7, Math.max(3, Math.round(plotHeight / 36) + 1))
+    yScale = niceTicks(lo, hi, maxTicks)
+    // Keep a labelled line off the very top so its label stays inside.
+    if (references.some((r) => r.label && r.value === yScale!.domain[1]))
+      yScale = niceTicks(lo, hi + (hi - lo) / maxTicks, maxTicks)
+  }
+
+  // Time axis: calendar-aligned ticks spaced for the room, labels unclipped.
+  const times = data.map((p) => p.time)
+  const first = Math.min(...times, ...markers.map((m) => m.time))
+  const last = Math.max(...times, ...markers.map((m) => m.time))
+  let xTicks: number[] | undefined
+  let xLabel: ((time: number) => string) | undefined
+  if (!sparkline && kind === "area") {
+    if (fixedTimeTicks) {
+      xTicks = fixedTimeTicks
+      xLabel = formatTimeTick ?? formatTime ?? ((t) => String(t))
+    } else {
+      const sample = formatTimeTick?.(last) ?? "Nov ’26"
+      const maxTicks = Math.max(
+        2,
+        Math.floor(plotWidth / (labelWidth(sample) + 24))
+      )
+      const t = timeTicks(first, last, maxTicks, { utc })
+      xLabel =
+        formatTimeTick ??
+        ((time) =>
+          formatTickTime(time, t.unit, { utc, crossesYear: t.crossesYear }))
+      xTicks = fitTimeTicks(
+        t.ticks,
+        [first, last],
+        plotWidth,
+        xLabel,
+        MARGIN.right
+      )
+    }
+  } else if (!sparkline) {
+    xLabel =
+      formatTimeTick ??
+      formatTime ??
+      ((time) => formatChartTime(time, { month: "short", day: "numeric" }))
+    const sample = data.length ? xLabel(data[data.length - 1].time) : ""
+    xTicks = everyNth(
+      times,
+      Math.max(1, Math.floor(plotWidth / (labelWidth(sample) + 16)))
+    )
+  }
+
   return (
-    <ChartContainer
-      config={config}
-      aria-label={label}
-      role="img"
-      className={`aspect-auto w-full tabular-nums ${height}`}
-    >
-      <Plot
-        accessibilityLayer
-        data={data}
-        stackOffset={stacked && kind === "bar" ? "sign" : undefined}
-        margin={{ left: 0, right: 8, top: 8, bottom: 0 }}
+    <div ref={ref} className={`w-full min-w-0 ${height}`}>
+      <ChartContainer
+        config={config}
+        aria-label={label}
+        role="img"
+        className="aspect-auto h-full w-full tabular-nums"
       >
-        {!sparkline && <CartesianGrid vertical={false} />}
-        {!sparkline && (
-          <XAxis
-            dataKey="time"
-            type={kind === "bar" ? "category" : "number"}
-            domain={kind === "bar" ? undefined : ["dataMin", "dataMax"]}
-            scale={kind === "bar" ? "auto" : "linear"}
-            tickLine={false}
-            axisLine={false}
-            minTickGap={45}
-            tickFormatter={(value) => {
-              const time = chartTimestamp(value)
-              if (time === undefined) return "—"
-              return (
-                formatTimeTick?.(time) ??
-                formatTime?.(time) ??
-                formatChartTime(
-                  time,
-                  data.length > 1 &&
-                    data[data.length - 1].time - data[0].time > 172800000
-                    ? { month: "short", day: "numeric" }
-                    : { hour: "numeric", minute: "2-digit" }
-                )
-              )
-            }}
-          />
-        )}
-        {!sparkline && (
-          <YAxis
-            width={72}
-            domain={
-              baseline === "data" && kind === "area" && !stacked
-                ? ["auto", "auto"]
-                : undefined
-            }
-            tickLine={false}
-            axisLine={false}
-            tickFormatter={formatTick ?? format}
-            tick={{ fontSize: 11, width: 70 }}
-          />
-        )}
-        {!sparkline && (
-          <ChartTooltip
-            content={
-              <ChartTooltipContent
-                labelFormatter={(_, payload) => {
-                  const time = chartTooltipTime(payload)
-                  return time === undefined
-                    ? "—"
-                    : (formatTime?.(time) ??
-                        formatChartTime(time, {
-                          dateStyle: "medium",
-                          timeStyle: "short",
-                        }))
-                }}
-                formatter={(value, name) => (
-                  <span className="flex w-full justify-between gap-4">
-                    <span>{config[String(name)]?.label ?? name}</span>
-                    <span className="font-medium tabular-nums">
-                      {format(Number(value))}
+        <Plot
+          accessibilityLayer
+          data={data}
+          stackOffset={stacked && kind === "bar" ? "sign" : undefined}
+          margin={sparkline ? { left: 0, right: 0, top: 2, bottom: 2 } : MARGIN}
+        >
+          {!sparkline && <CartesianGrid vertical={false} />}
+          {!sparkline && (
+            <XAxis
+              dataKey="time"
+              type={kind === "bar" ? "category" : "number"}
+              domain={kind === "bar" ? undefined : [first, last]}
+              scale={kind === "bar" ? "auto" : "linear"}
+              allowDataOverflow={kind !== "bar"}
+              tickLine={false}
+              axisLine={false}
+              ticks={xTicks}
+              interval={0}
+              height={X_AXIS_HEIGHT}
+              tickFormatter={(value) => {
+                const time = chartTimestamp(value)
+                if (time === undefined) return "—"
+                return xLabel ? xLabel(time) : String(time)
+              }}
+            />
+          )}
+          {!sparkline && (
+            <YAxis
+              width={Y_AXIS_WIDTH}
+              domain={yScale?.domain}
+              ticks={yScale?.ticks}
+              interval={0}
+              allowDataOverflow
+              tickLine={false}
+              axisLine={false}
+              tickFormatter={formatTick ?? format}
+              tick={{ fontSize: 11, width: 70 }}
+            />
+          )}
+          {sparkline && baseline === "data" ? (
+            <YAxis hide domain={["dataMin", "dataMax"]} />
+          ) : null}
+          {!sparkline && (
+            <ChartTooltip
+              content={
+                <ChartTooltipContent
+                  labelFormatter={(_, payload) => {
+                    const time = chartTooltipTime(payload)
+                    return time === undefined
+                      ? "—"
+                      : (formatTime?.(time) ??
+                          formatChartTime(time, {
+                            dateStyle: "medium",
+                            timeStyle: "short",
+                          }))
+                  }}
+                  formatter={(value, name) => (
+                    <span className="flex w-full justify-between gap-4">
+                      <span>{config[String(name)]?.label ?? name}</span>
+                      <span className="font-medium tabular-nums">
+                        {format(Number(value))}
+                      </span>
                     </span>
-                  </span>
-                )}
+                  )}
+                />
+              }
+            />
+          )}
+          {legend && (
+            <ChartLegend
+              // Series order, which is also the stack order from the baseline.
+              itemSorter={null}
+              content={
+                // Whole items wrap to new rows; labels never break mid-name.
+                <ChartLegendContent className="flex-wrap gap-x-4 gap-y-1.5 [&>div]:whitespace-nowrap" />
+              }
+            />
+          )}
+          {negative && (
+            <ReferenceLine y={0} stroke="var(--border)" strokeWidth={1} />
+          )}
+          {!sparkline &&
+            kind === "bar" &&
+            markers.map((m) => (
+              <ReferenceArea
+                key={`marker-${m.time}`}
+                x1={m.time}
+                x2={m.time}
+                fill="var(--muted-foreground)"
+                fillOpacity={0.1}
+                label={
+                  m.label
+                    ? {
+                        value: m.label,
+                        position: "insideTop",
+                        ...LINE_LABEL,
+                      }
+                    : undefined
+                }
               />
-            }
-          />
-        )}
-        {!sparkline && Object.keys(config).length > 1 && (
-          <ChartLegend
-            content={
-              // Whole items wrap to new rows; labels never break mid-name.
-              <ChartLegendContent className="flex-wrap gap-x-4 gap-y-1.5 [&>div]:whitespace-nowrap" />
-            }
-          />
-        )}
-        {negative && (
-          <ReferenceLine y={0} stroke="var(--border)" strokeWidth={1} />
-        )}
-        {!sparkline &&
-          references.map((r) => (
-            <ReferenceLine
-              key={`${r.value}-${r.label ?? ""}`}
-              y={r.value}
-              stroke="var(--muted-foreground)"
-              strokeDasharray="4 4"
-              strokeWidth={1}
-              ifOverflow="extendDomain"
-              label={
-                r.label
-                  ? {
-                      value: r.label,
-                      position: "insideTopRight",
-                      fill: "var(--muted-foreground)",
-                      fontSize: 11,
-                    }
-                  : undefined
-              }
-            />
-          ))}
-        {Object.keys(config).map((key, i) =>
-          kind === "bar" ? (
-            <Bar
-              key={key}
-              dataKey={key}
-              fill={`var(--color-${key})`}
-              stackId={stacked ? "stack" : undefined}
-              // A surface-coloured edge separates stacked segments.
-              stroke={stacked ? "var(--card)" : undefined}
-              strokeWidth={stacked ? 1 : undefined}
-              radius={stacked ? 2 : 3}
-              maxBarSize={48}
-              isAnimationActive={false}
-            />
-          ) : (
-            <Area
-              key={key}
-              dataKey={key}
-              type={curve}
-              stroke={`var(--color-${key})`}
-              fill={`var(--color-${key})`}
-              fillOpacity={dashed.includes(key) ? 0 : sparkline ? 0.12 : 0.06}
-              strokeWidth={2}
-              strokeDasharray={
-                i > 4 || dashed.includes(key) ? "4 3" : undefined
-              }
-              stackId={stacked ? "stack" : undefined}
-              connectNulls={false}
-              isAnimationActive={false}
-            />
-          )
-        )}
-      </Plot>
-    </ChartContainer>
+            ))}
+          {keys.map((key, i) =>
+            kind === "bar" ? (
+              <Bar
+                key={key}
+                dataKey={key}
+                fill={`var(--color-${key})`}
+                stackId={stacked ? "stack" : undefined}
+                // A surface-coloured edge separates stacked segments.
+                stroke={stacked ? "var(--card)" : undefined}
+                strokeWidth={stacked ? 1 : undefined}
+                radius={stacked ? 2 : 3}
+                maxBarSize={48}
+                isAnimationActive={false}
+              />
+            ) : (
+              <Area
+                key={key}
+                dataKey={key}
+                type={curve}
+                stroke={`var(--color-${key})`}
+                fill={`var(--color-${key})`}
+                fillOpacity={dashed.includes(key) ? 0 : sparkline ? 0.12 : 0.06}
+                strokeWidth={2}
+                strokeDasharray={
+                  i > 4 || dashed.includes(key) ? "4 3" : undefined
+                }
+                stackId={stacked ? "stack" : undefined}
+                connectNulls={false}
+                isAnimationActive={false}
+              />
+            )
+          )}
+          {/* Lines and their labels draw over the series so bars never hide them. */}
+          {!sparkline &&
+            references.map((r) => (
+              <ReferenceLine
+                key={`${r.value}-${r.label ?? ""}`}
+                y={r.value}
+                stroke="var(--muted-foreground)"
+                strokeDasharray="4 4"
+                strokeWidth={1}
+                label={
+                  r.label
+                    ? {
+                        value: r.label,
+                        position:
+                          r.side === "left"
+                            ? "insideTopLeft"
+                            : "insideTopRight",
+                        ...LINE_LABEL,
+                      }
+                    : undefined
+                }
+              />
+            ))}
+          {!sparkline &&
+            kind === "area" &&
+            markers.map((m) => (
+              <ReferenceLine
+                key={`marker-${m.time}`}
+                x={m.time}
+                stroke="var(--muted-foreground)"
+                strokeDasharray="2 3"
+                strokeWidth={1}
+                label={
+                  m.label
+                    ? {
+                        value: m.label,
+                        // Past the middle the label sits left of the line, inside the plot.
+                        position:
+                          last > first &&
+                          (m.time - first) / (last - first) > 0.5
+                            ? "insideTopRight"
+                            : "insideTopLeft",
+                        ...LINE_LABEL,
+                      }
+                    : undefined
+                }
+              />
+            ))}
+        </Plot>
+      </ChartContainer>
+    </div>
   )
 }
 export function ChartCard({

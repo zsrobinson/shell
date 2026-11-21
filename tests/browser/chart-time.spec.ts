@@ -21,6 +21,26 @@ test("area and bar axes and tooltips use real numeric timestamps", async ({
       .allTextContents()
     expect(ticks.some((t) => /AM|PM|Nov/.test(t))).toBeTruthy()
     expect(ticks.join(" ")).not.toMatch(/Invalid Date|NaN|—/)
+    // Time ticks are evenly spaced and every label sits inside the chart.
+    const frame = await chart.boundingBox()
+    if (!frame) throw Error("Missing chart layout")
+    const xs = await chart
+      .locator(
+        ".recharts-xAxis-tick-labels .recharts-cartesian-axis-tick-value"
+      )
+      .evaluateAll((els) =>
+        els.map((el) => {
+          const r = el.getBoundingClientRect()
+          return { mid: r.left + r.width / 2, left: r.left, right: r.right }
+        })
+      )
+    expect(xs.length).toBeGreaterThan(1)
+    const gaps = xs.slice(1).map((x, i) => x.mid - xs[i].mid)
+    for (const gap of gaps) expect(Math.abs(gap - gaps[0])).toBeLessThan(2)
+    for (const x of xs) {
+      expect(x.left).toBeGreaterThanOrEqual(frame.x - 1)
+      expect(x.right).toBeLessThanOrEqual(frame.x + frame.width + 1)
+    }
     const box = await chart.boundingBox()
     if (!box) throw Error("Missing chart layout")
     await page.mouse.move(box.x + box.width * 0.8, box.y + box.height * 0.4)

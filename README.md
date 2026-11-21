@@ -165,11 +165,22 @@ Keep a series' key and color consistent across pages. Supply a descriptive
 states, tabular numbers, keyboard accessible charts and tooltips; single series
 charts omit the legend. `value` keeps a current reading alongside a card title.
 
+Every chart measures itself and picks its own axes: value ticks on round steps
+(1, 2, 2.5 or 5 × 10ⁿ) over a domain that hugs the data, and time ticks on even
+calendar steps (hours; the 1st, 8th, 15th, 22nd and 29th; month starts; years)
+that fit the width, with labels that would clip at the edge dropped. Bars show
+evenly spaced categories ending at the latest. Pass `utc` when times are
+calendar dates at UTC midnight. `timeTicks` sets exact ticks for a `time` that
+is not a timestamp, such as day of month. The helpers live in `lib/chart-ticks`.
+
 `formatTick` and `formatTimeTick` give the axes rounder labels than the
 tooltip (for example `$105k` and month names), `curve="linear"` draws straight
 segments that never overshoot, `references` adds labelled dashed lines such as a
-budget or target, and `dashed` draws listed series as dashed lines without fill,
-such as a projection. `TrendChart` and the cards take `stacked` (bars stack by sign, so negative
+budget or target (`side: "left"` moves the label clear of a line's end),
+`markers` labels a time (a vertical line on an area chart, a shaded bar such as
+a month in progress on a bar chart), and `dashed` draws listed series as dashed
+lines without fill, such as a projection. Legends follow series order, which is
+also the stack order; `legend` names a single series too. `TrendChart` and the cards take `stacked` (bars stack by sign, so negative
 series grow below a zero line), `formatTime` for ticks and tooltip headings,
 and `className` for the chart height. `baseline="data"` fits an area chart's
 value axis to its series instead of zero, for balances and other levels where
