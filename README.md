@@ -175,7 +175,8 @@ is not a timestamp, such as day of month. The helpers live in `lib/chart-ticks`.
 
 `formatTick` and `formatTimeTick` give the axes rounder labels than the
 tooltip (for example `$105k` and month names), `curve="linear"` draws straight
-segments that never overshoot, `references` adds labelled dashed lines such as a
+segments that never overshoot, `references` adds labelled dashed lines (`side: "axis"` labels them in the
+value-axis gutter, clear of bars) such as a
 budget or target (`side: "left"` moves the label clear of a line's end),
 `markers` labels a time (a vertical line on an area chart, a shaded bar such as
 a month in progress on a bar chart), and `dashed` draws listed series as dashed
