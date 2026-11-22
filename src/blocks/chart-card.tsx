@@ -1,4 +1,4 @@
-import { useLayoutEffect, useState } from "react"
+import { useLayoutEffect, useState, type ReactNode } from "react"
 import {
   chartTimestamp,
   chartTooltipTime,
@@ -196,6 +196,7 @@ export function TrendChart({
   integer = false,
   onSelect,
   selected,
+  emptyMessage = "No history in this range",
 }: {
   data: ChartPoint[]
   config: ChartConfig
@@ -256,6 +257,11 @@ export function TrendChart({
   onSelect?: (time: number) => void
   /** The selected time, from `onSelect`. */
   selected?: number
+  /**
+   * Shown in place of the plot when no series has a value, for example
+   * "No data yet" while history is unavailable. Plain text, never an error.
+   */
+  emptyMessage?: ReactNode
 }) {
   const height = className ?? (sparkline ? "h-12" : "h-56")
   const [ref, size] = useElementSize<HTMLDivElement>()
@@ -267,9 +273,12 @@ export function TrendChart({
     return (
       <div
         role="status"
-        className={`flex items-center justify-center text-sm text-muted-foreground ${height}`}
+        // Nothing to plot takes less room than a chart; loading keeps its size.
+        className={`flex items-center justify-center text-sm text-muted-foreground ${
+          loading || sparkline ? height : "h-24"
+        }`}
       >
-        {loading ? "Loading history…" : "No history in this range"}
+        {loading ? "Loading history…" : emptyMessage}
       </div>
     )
   const Plot = kind === "bar" ? BarChart : AreaChart
@@ -671,6 +680,7 @@ export function DonutChart({
   max = 5,
   loading,
   onSelect,
+  emptyMessage = "Nothing in this range",
 }: {
   data: DonutDatum[]
   label: string
@@ -679,6 +689,8 @@ export function DonutChart({
   max?: number
   loading?: boolean
   onSelect?: (key: string) => void
+  /** Shown in place of the ring when there is nothing to plot. */
+  emptyMessage?: ReactNode
 }) {
   const slices = donutSlices(data, max)
   const total = slices.reduce((sum, d) => sum + d.value, 0)
@@ -688,7 +700,7 @@ export function DonutChart({
         role="status"
         className="flex h-44 items-center justify-center text-sm text-muted-foreground"
       >
-        {loading ? "Loading…" : "Nothing in this range"}
+        {loading ? "Loading…" : emptyMessage}
       </div>
     )
   const config = Object.fromEntries(

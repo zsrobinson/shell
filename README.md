@@ -44,19 +44,32 @@ New app checklist:
 
 ## Export surface
 
-| Import                                | Contents                                                                                                                                                                              |
-| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `@zsrobinson/shell`                   | AppShell, CommandPalette, CommandSearch, AppIcon, Page, PageHeader, PageTitle, PageMeta, PageActions, PageGrid, PageStack, SectionGroup, AppNavigation, theme hooks, toast, app types |
-| `@zsrobinson/shell/styles.css`        | Tailwind v4, Flexoki tokens, Geist, radii, Rhea variants and the standard Tailwind type scale                                                                                         |
-| `@zsrobinson/shell/ui/*`              | Official Rhea primitives: button, card, sidebar, table, field, dialog, checkbox, popover, calendar, combobox, and the other UI modules                                                |
-| `@zsrobinson/shell/blocks/*`          | confirm-action, copy-button, detail-list, list-row, query-error, file-drop, upload-progress, page-states, date-picker, filter-bar, stat, status-timeline, chart-card, sankey-chart    |
-| `@zsrobinson/shell/lib/api`           | ApiError, parseJson, getJson, errorMessage                                                                                                                                            |
-| `@zsrobinson/shell/lib/format`        | Bytes/MiB, duration, relative/absolute time, percent, count, pluralize, parseTime                                                                                                     |
-| `@zsrobinson/shell/lib/calendar-date` | Local YYYY-MM-DD dates: parse, format, ranges, end of day, viewer time zone                                                                                                           |
-| `@zsrobinson/shell/lib/sankey`        | prepareSankey and sankeyLayout: the Sankey block's ordering, colours and label room                                                                                                   |
-| `@zsrobinson/shell/lib/use-upload`    | Progress, mutation notifications and upload limit; app supplies transport and cache refresh                                                                                           |
-| `@zsrobinson/shell/hooks/use-mobile`  | Mobile breakpoint hook                                                                                                                                                                |
-| `@zsrobinson/shell/server`            | createShellServer, mountStatic, serve, ServerOptions, ShellEnv, RequestMetadata                                                                                                       |
+| Import                                | Contents                                                                                                                                                                                                                                                                 |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `@zsrobinson/shell`                   | AppShell, CommandPalette, CommandSearch, AppIcon, Page, PageHeader, PageTitle, PageMeta, PageActions, PageGrid, PageStack, SectionGroup, AppNavigation, theme hooks, toast, app types                                                                                    |
+| `@zsrobinson/shell/styles.css`        | Tailwind v4, Flexoki tokens, Geist, radii, Rhea variants and the standard Tailwind type scale                                                                                                                                                                            |
+| `@zsrobinson/shell/ui/*`              | Official Rhea primitives: button, card, sidebar, table, field, dialog, checkbox, popover, calendar, combobox, and the other UI modules                                                                                                                                   |
+| `@zsrobinson/shell/blocks/*`          | confirm-action, typed-confirm, prompt-action, stacked-table, section-nav, empty-state, relative-time, copy-button, detail-list, list-row, query-error, file-drop, upload-progress, page-states, date-picker, filter-bar, stat, status-timeline, chart-card, sankey-chart |
+| `@zsrobinson/shell/lib/api`           | ApiError, parseJson, getJson, errorMessage                                                                                                                                                                                                                               |
+| `@zsrobinson/shell/lib/format`        | Bytes/MiB, duration, relative/absolute time, percent, count, pluralize, parseTime (ISO, snapshot ids, Minecraft dates)                                                                                                                                                   |
+| `@zsrobinson/shell/lib/calendar-date` | Local YYYY-MM-DD dates: parse, format, ranges, end of day, viewer time zone                                                                                                                                                                                              |
+| `@zsrobinson/shell/lib/sankey`        | prepareSankey and sankeyLayout: the Sankey block's ordering, colours and label room                                                                                                                                                                                      |
+| `@zsrobinson/shell/lib/use-upload`    | Progress, mutation notifications and upload limit; app supplies transport and cache refresh                                                                                                                                                                              |
+| `@zsrobinson/shell/hooks/use-mobile`  | Mobile breakpoint hook                                                                                                                                                                                                                                                   |
+| `@zsrobinson/shell/server`            | createShellServer, mountStatic, serve, ServerOptions, ShellEnv, RequestMetadata                                                                                                                                                                                          |
+
+Destructive actions get their own page with `TypedConfirm`: consequences,
+what is saved first, and the exact name typed before the button unlocks.
+`PromptAction` is the one-field dialog for names and paths; `ConfirmAction`
+stays for short confirmations. `StackedTable` turns each row into a list item
+below the `sm` breakpoint, `SectionNav` shows sub-pages as linked tabs,
+`EmptyState` fills an empty card and `RelativeTime` shows "3 hours ago" with
+the absolute time on hover. Chart blocks accept `emptyMessage` (for example
+"No data yet") and shrink while there is nothing to plot. `parseTime` reads ISO
+strings, snapshot ids like `20261122T043201Z-ffc3be` and Minecraft's
+`2026-11-20 12:00:00 +0000`; never pass those strings to `Date.parse` or
+`new Date`, which disagree across engines. `ApiError` carries the body's
+`code` when the server sends one.
 
 Import the stylesheet once; the starter's own CSS is only the import and an
 `@source` directive. All theme decisions belong in shell, not app CSS. Pair `font-mono` with `text-xs` or `text-sm`. Supply data and app navigation to AppShell (`searchPlaceholder` names what the command palette finds); it has

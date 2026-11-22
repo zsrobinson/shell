@@ -11,10 +11,13 @@ export function ListRow({
   name,
   detail,
   children,
+  wrapDetail = false,
 }: {
   name: string
   detail?: ReactNode
   children?: ReactNode
+  /** Let a long detail wrap instead of clipping it to one line. */
+  wrapDetail?: boolean
 }) {
   return (
     <Item
@@ -25,7 +28,11 @@ export function ListRow({
       <ItemContent>
         <ItemTitle>{name}</ItemTitle>
         {detail ? (
-          <ItemDescription className="line-clamp-1 text-xs">
+          <ItemDescription
+            className={
+              wrapDetail ? "line-clamp-none text-xs" : "line-clamp-1 text-xs"
+            }
+          >
             {detail}
           </ItemDescription>
         ) : null}

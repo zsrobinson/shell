@@ -177,6 +177,12 @@ import {
   type StatusState,
 } from "@zsrobinson/shell/blocks/status-timeline"
 import { UploadProgress } from "@zsrobinson/shell/blocks/upload-progress"
+import { EmptyState } from "@zsrobinson/shell/blocks/empty-state"
+import { PromptAction } from "@zsrobinson/shell/blocks/prompt-action"
+import { RelativeTime } from "@zsrobinson/shell/blocks/relative-time"
+import { SectionNav } from "@zsrobinson/shell/blocks/section-nav"
+import { StackedTable } from "@zsrobinson/shell/blocks/stacked-table"
+import { TypedConfirm } from "@zsrobinson/shell/blocks/typed-confirm"
 import {
   SignedOut,
   NotFound,
@@ -602,6 +608,7 @@ function Gallery() {
             <Button>Add item</Button>
           </EmptyContent>
         </Empty>
+        <NewBlocks />
         <SignedOut />
         <NotFound />
         <RouteError
@@ -610,5 +617,103 @@ function Gallery() {
         />
       </div>
     </TooltipProvider>
+  )
+}
+
+const ROWS = [
+  { id: "a", name: "Nightly", at: "2026-11-20 12:00:00 +0000", ok: true },
+  { id: "b", name: "Weekly", at: "20261122T043201Z-ffc3be", ok: false },
+]
+
+function NewBlocks() {
+  const [section, setSection] = useState("one")
+  return (
+    <>
+      <SectionNav
+        label="Example sections"
+        items={["one", "two", "three"].map((id) => ({
+          id,
+          label: `Section ${id}`,
+          active: section === id,
+          render: (
+            <a
+              href={`#${id}`}
+              onClick={(event) => {
+                event.preventDefault()
+                setSection(id)
+              }}
+            />
+          ),
+        }))}
+      />
+      <Card>
+        <CardHeader>
+          <CardTitle>Stacked table</CardTitle>
+        </CardHeader>
+        <CardContent className="px-0">
+          <StackedTable
+            label="Example runs"
+            rows={ROWS}
+            rowKey={(row) => row.id}
+            columns={[
+              {
+                id: "name",
+                header: "Name",
+                stack: "title",
+                cell: (row) => row.name,
+              },
+              {
+                id: "at",
+                header: "When",
+                cell: (row) => <RelativeTime value={row.at} />,
+              },
+              {
+                id: "ok",
+                header: "Outcome",
+                stack: "end",
+                cell: (row) => (
+                  <Badge variant={row.ok ? "positive" : "destructive"}>
+                    {row.ok ? "Succeeded" : "Failed"}
+                  </Badge>
+                ),
+              },
+            ]}
+          />
+        </CardContent>
+      </Card>
+      <Card>
+        <CardContent>
+          <EmptyState
+            title="Nothing here yet"
+            description="Items appear once they are created."
+            action={
+              <PromptAction
+                trigger={<Button size="sm">New item</Button>}
+                title="New item"
+                label="Name"
+                validate={(value) =>
+                  value.includes("/") ? "Use a name without slashes" : null
+                }
+                confirmLabel="Create"
+                onConfirm={async (value) => {
+                  toast.success(`Created ${value}`)
+                }}
+              />
+            }
+          />
+        </CardContent>
+      </Card>
+      <TypedConfirm
+        title="Delete example"
+        typedName="example"
+        consequences={["The item is removed.", "Links to it stop working."]}
+        safeguards="A copy is kept first."
+        confirmLabel="Delete"
+        cancel={<Button variant="outline">Cancel</Button>}
+        onConfirm={async () => {
+          toast.success("Deleted")
+        }}
+      />
+    </>
   )
 }
