@@ -28,15 +28,34 @@ export function formatDuration(seconds: number) {
 }
 
 const COMPACT = /^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z/
+// Minecraft's ban and whitelist files: "2026-11-20 12:00:00 +0000".
+const MINECRAFT =
+  /^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2}) ?([+-])(\d{2}):?(\d{2})$/
 
-/** Milliseconds for ISO strings and compact snapshot ids like 20261120T163807Z-ab12. */
+/**
+ * Milliseconds for ISO strings, compact snapshot ids like
+ * 20261120T163807Z-ab12, and Minecraft's "2026-11-20 12:00:00 +0000".
+ * Engines disagree on non-ISO strings (Firefox rejects Minecraft's format),
+ * so those are parsed here explicitly. NaN when the value is not a time.
+ */
 export function parseTime(value: string) {
-  const compact = COMPACT.exec(value)
+  if (typeof value !== "string") return NaN
+  const text = value.trim()
+  const compact = COMPACT.exec(text)
   if (compact) {
     const [, y, mo, d, h, mi, s] = compact.map(Number)
     return Date.UTC(y, mo - 1, d, h, mi, s)
   }
-  return Date.parse(value)
+  const minecraft = MINECRAFT.exec(text)
+  if (minecraft) {
+    const [y, mo, d, h, mi, s] = minecraft.slice(1, 7).map(Number)
+    if (mo < 1 || mo > 12 || d < 1 || d > 31 || h > 23 || mi > 59 || s > 60)
+      return NaN
+    const sign = minecraft[7] === "-" ? -1 : 1
+    const offset = sign * (Number(minecraft[8]) * 60 + Number(minecraft[9]))
+    return Date.UTC(y, mo - 1, d, h, mi, s) - offset * 60_000
+  }
+  return Date.parse(text)
 }
 
 const relative = new Intl.RelativeTimeFormat(undefined, { numeric: "auto" })
@@ -49,9 +68,13 @@ const steps: [Intl.RelativeTimeFormatUnit, number][] = [
   ["minute", 60],
 ]
 
-export function formatRelative(iso: string, now = Date.now()) {
-  const time = parseTime(iso)
-  if (Number.isNaN(time)) return "—"
+/** Any value parseTime accepts, or epoch milliseconds. */
+const toTime = (value: string | number) =>
+  typeof value === "number" ? value : parseTime(value)
+
+export function formatRelative(iso: string | number, now = Date.now()) {
+  const time = toTime(iso)
+  if (!Number.isFinite(time)) return "—"
   const seconds = (time - now) / 1000
   for (const [unit, size] of steps)
     if (Math.abs(seconds) >= size)
@@ -64,9 +87,9 @@ const dateTime = new Intl.DateTimeFormat(undefined, {
   timeStyle: "short",
 })
 
-export function formatDateTime(iso: string) {
-  const time = parseTime(iso)
-  return Number.isNaN(time) ? "—" : dateTime.format(time)
+export function formatDateTime(iso: string | number) {
+  const time = toTime(iso)
+  return Number.isFinite(time) ? dateTime.format(time) : "—"
 }
 
 export function formatPercent(value: number) {

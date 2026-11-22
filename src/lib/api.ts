@@ -1,11 +1,14 @@
 /** A failed API call, carrying the HTTP status and the server's message. */
 export class ApiError extends Error {
   readonly status: number
+  /** A machine-readable reason from the body's `code`, when the server sends one. */
+  readonly code?: string
 
-  constructor(message: string, status: number) {
+  constructor(message: string, status: number, code?: string) {
     super(message)
     this.name = "ApiError"
     this.status = status
+    if (code !== undefined) this.code = code
   }
 }
 
@@ -22,7 +25,14 @@ export async function parseJson<T>(response: Response): Promise<T> {
       body && typeof body === "object" && "error" in body
         ? String(body.error)
         : `Request failed (${response.status})`
-    throw new ApiError(message, response.status)
+    const code =
+      body &&
+      typeof body === "object" &&
+      "code" in body &&
+      typeof body.code === "string"
+        ? body.code
+        : undefined
+    throw new ApiError(message, response.status, code)
   }
   return body as T
 }
