@@ -1,4 +1,5 @@
 import { ChartGallery } from "../chart-gallery"
+import { ComboboxGallery } from "../combobox-gallery"
 import {
   Select,
   SelectTrigger,
@@ -216,7 +217,7 @@ function Components() {
             <iframe
               title={`${theme} components`}
               src={`/components?theme=${theme}`}
-              className="h-[3500px] w-full rounded-2xl border"
+              className="h-[4600px] w-full rounded-2xl border"
             />
           </section>
         ))}
@@ -452,6 +453,7 @@ function Gallery() {
             </InputGroup>
           </FieldGroup>
         </FieldSet>
+        <ComboboxGallery />
         <Select defaultValue="example">
           <SelectTrigger aria-label="Select example">
             <SelectValue />

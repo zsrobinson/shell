@@ -1,4 +1,5 @@
 export { AppShell, type AppShellProps } from "./app/app-shell"
+export { CommandPalette, type CommandSearch } from "./app/command-palette"
 export { AppIcon } from "./app/app-icon"
 export {
   Page,

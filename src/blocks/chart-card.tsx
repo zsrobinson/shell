@@ -194,6 +194,8 @@ export function TrendChart({
   utc = false,
   legend: showLegend,
   integer = false,
+  onSelect,
+  selected,
   emptyMessage = "No history in this range",
 }: {
   data: ChartPoint[]
@@ -249,6 +251,13 @@ export function TrendChart({
   /** Whole-number values such as counts: value ticks step by at least 1. */
   integer?: boolean
   /**
+   * Bar charts only: choose a bar (a time) by clicking it. Other times dim
+   * while one is selected. Offer a keyboard path too, such as a table.
+   */
+  onSelect?: (time: number) => void
+  /** The selected time, from `onSelect`. */
+  selected?: number
+  /**
    * Shown in place of the plot when no series has a value, for example
    * "No data yet" while history is unavailable. Plain text, never an error.
    */
@@ -273,6 +282,7 @@ export function TrendChart({
       </div>
     )
   const Plot = kind === "bar" ? BarChart : AreaChart
+  const selectable = kind === "bar" && !sparkline && onSelect !== undefined
   const legend = !sparkline && (showLegend ?? keys.length > 1)
   const width = size?.width ?? 600
   const plotWidth = Math.max(80, width - Y_AXIS_WIDTH - MARGIN.right)
@@ -366,6 +376,15 @@ export function TrendChart({
           accessibilityLayer
           data={data}
           stackOffset={stacked && kind === "bar" ? "sign" : undefined}
+          className={selectable ? "cursor-pointer" : undefined}
+          onClick={
+            selectable
+              ? (state) => {
+                  const i = Number(state?.activeTooltipIndex)
+                  if (Number.isInteger(i) && data[i]) onSelect(data[i].time)
+                }
+              : undefined
+          }
           margin={sparkline ? { left: 0, right: 0, top: 2, bottom: 2 } : margin}
         >
           {!sparkline && <CartesianGrid vertical={false} />}
@@ -453,8 +472,9 @@ export function TrendChart({
                 x2={m.time}
                 fill="var(--muted-foreground)"
                 fillOpacity={0.1}
+                // A narrow chart has no room for the label beside its bars.
                 label={
-                  m.label
+                  m.label && width >= 480
                     ? {
                         value: m.label,
                         position: "insideTop",
@@ -477,7 +497,16 @@ export function TrendChart({
                 radius={stacked ? 2 : 3}
                 maxBarSize={48}
                 isAnimationActive={false}
-              />
+              >
+                {selectable && selected !== undefined
+                  ? data.map((p) => (
+                      <Cell
+                        key={p.time}
+                        fillOpacity={p.time === selected ? 1 : 0.4}
+                      />
+                    ))
+                  : null}
+              </Bar>
             ) : (
               <Area
                 key={key}
@@ -708,6 +737,9 @@ export function DonutChart({
               data={slices}
               dataKey="value"
               nameKey="key"
+              // Clockwise from twelve o'clock, in legend order.
+              startAngle={90}
+              endAngle={-270}
               innerRadius="68%"
               outerRadius="100%"
               paddingAngle={slices.length > 1 ? 1.5 : 0}
