@@ -86,6 +86,21 @@ export function ChartRangeSelect<T extends string = ChartRange>({
   )
 }
 /** The rendered size of an element, following resizes; pass `ref` to it. */
+const coarseQuery = "(hover: none) and (pointer: coarse)"
+/**
+ * Touch screens have no hover, and Recharts follows only touch moves, so a
+ * tap would show nothing. There the tooltip opens on tap (a click) instead.
+ */
+function useTooltipTrigger(): "hover" | "click" {
+  const [coarse] = useState(
+    () =>
+      typeof window !== "undefined" &&
+      typeof window.matchMedia === "function" &&
+      window.matchMedia(coarseQuery).matches
+  )
+  return coarse ? "click" : "hover"
+}
+
 function useElementSize<T extends HTMLElement>() {
   const [element, ref] = useState<T | null>(null)
   const [size, setSize] = useState<{ width: number; height: number } | null>(
@@ -235,6 +250,7 @@ export function TrendChart({
 }) {
   const height = className ?? (sparkline ? "h-12" : "h-56")
   const [ref, size] = useElementSize<HTMLDivElement>()
+  const trigger = useTooltipTrigger()
   const keys = Object.keys(config)
   const negative = data.some((p) => keys.some((k) => (p[k] ?? 0) < 0))
   const empty = !data.some((p) => keys.some((k) => p[k] != null))
@@ -381,6 +397,7 @@ export function TrendChart({
           ) : null}
           {!sparkline && (
             <ChartTooltip
+              trigger={trigger}
               content={
                 <ChartTooltipContent
                   labelFormatter={(_, payload) => {
