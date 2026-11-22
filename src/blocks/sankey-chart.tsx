@@ -77,6 +77,7 @@ export function SankeyChart({
   className,
   onNodeClick,
   loading,
+  compact = false,
 }: {
   nodes: SankeyNodeInput[]
   links: SankeyLinkInput[]
@@ -89,6 +90,11 @@ export function SankeyChart({
   className?: string
   onNodeClick?: (node: SankeyNodeInput) => void
   loading?: boolean
+  /**
+   * For narrow containers such as a phone: names truncate (the full name is
+   * the label's title) and values sit on a second line.
+   */
+  compact?: boolean
 }) {
   const data = useMemo(() => prepareSankey(nodes, links), [nodes, links])
   const [hover, setHover] = useState<Hover | null>(null)
@@ -101,15 +107,18 @@ export function SankeyChart({
   )
   const total =
     height ?? Math.min(760, Math.max(240, busiest * NODE_PADDING + 240))
+  // Middle columns label above their nodes; leave room at the top.
+  const top = data.columns > 2 ? MARGIN_Y + 22 : MARGIN_Y
   const layout = useMemo(
     () =>
       sankeyLayout(data, {
-        height: total - 2 * MARGIN_Y,
+        height: total - top - MARGIN_Y,
         nodePadding: NODE_PADDING,
         nodeWidth: NODE_WIDTH,
         format: formatValue,
+        maxNameChars: compact ? 16 : undefined,
       }),
-    [data, total, formatValue]
+    [data, total, top, formatValue, compact]
   )
 
   const [scroller, setScroller] = useState<HTMLDivElement | null>(null)
@@ -140,9 +149,12 @@ export function SankeyChart({
     const i = data.nodes.findIndex((n) => n.id === node.id)
     const mode = layout.labels[i] ?? "none"
     const outside = node.depth === 0 && last > 0
-    const tx = outside ? x - 6 : x + width + 6
-    const cy = top + height / 2
+    // Columns between the outer ones label above the node, clear of ribbons.
+    const above = node.depth > 0 && node.depth < last
+    const tx = above ? x + width / 2 : outside ? x - 6 : x + width + 6
+    const cy = above ? top - 6 : top + height / 2
     const value = formatValue(node.value)
+    const name = layout.names[i] ?? node.name
     const input = byId.get(node.id)
     const select = onNodeClick && input ? () => onNodeClick(input) : undefined
     return (
@@ -176,20 +188,43 @@ export function SankeyChart({
           rx={2}
           fill={node.color}
         />
-        {mode !== "none" && (
+        {above ? (
+          <text
+            x={tx}
+            y={cy}
+            textAnchor="middle"
+            className="pointer-events-none tabular-nums"
+            {...HALO}
+          >
+            {name !== node.name ? <title>{node.name}</title> : null}
+            <tspan
+              className="fill-foreground font-medium"
+              fontSize={SANKEY_NAME_SIZE}
+            >
+              {name}
+            </tspan>
+            <tspan
+              className="fill-muted-foreground"
+              fontSize={SANKEY_VALUE_SIZE}
+              dx={6}
+            >
+              {value}
+            </tspan>
+          </text>
+        ) : mode !== "none" ? (
           <text
             x={tx}
             y={mode === "full" ? cy - 2 : cy}
             textAnchor={outside ? "end" : "start"}
             dominantBaseline={mode === "full" ? "auto" : "central"}
             className="pointer-events-none tabular-nums"
-            {...(node.depth > 0 && node.depth < last ? HALO : {})}
           >
+            {name !== node.name ? <title>{node.name}</title> : null}
             <tspan
               className="fill-foreground font-medium"
               fontSize={SANKEY_NAME_SIZE}
             >
-              {node.name}
+              {name}
             </tspan>
             <tspan
               className="fill-muted-foreground"
@@ -201,7 +236,7 @@ export function SankeyChart({
               {value}
             </tspan>
           </text>
-        )}
+        ) : null}
       </g>
     )
   }
@@ -221,17 +256,26 @@ export function SankeyChart({
     const sy = sourceY + (layout.offsets[l.source.depth] ?? 0)
     const ty = targetY + (layout.offsets[l.target.depth] ?? 0)
     const active = linkActive(l, index)
+    // A filled ribbon between the source's and target's edges, so steep
+    // links keep their width instead of a stroke bulging past the nodes.
+    const half = Math.max(0.5, linkWidth / 2)
+    const d = [
+      `M${sourceX},${sy - half}`,
+      `C${sourceControlX},${sy - half} ${targetControlX},${ty - half} ${targetX},${ty - half}`,
+      `L${targetX},${ty + half}`,
+      `C${targetControlX},${ty + half} ${sourceControlX},${sy + half} ${sourceX},${sy + half}`,
+      "Z",
+    ].join("")
     return (
       <path
         data-slot="sankey-link"
-        d={`M${sourceX},${sy}C${sourceControlX},${sy} ${targetControlX},${ty} ${targetX},${ty}`}
-        fill="none"
-        stroke={l.color}
-        strokeWidth={Math.max(1, linkWidth)}
-        strokeOpacity={
+        d={d}
+        fill={l.color}
+        stroke="none"
+        fillOpacity={
           active === null ? LINK_OPACITY : active ? LINK_ACTIVE : LINK_MUTED
         }
-        className="transition-[stroke-opacity] duration-150"
+        className="transition-[fill-opacity] duration-150"
       />
     )
   }
@@ -272,14 +316,14 @@ export function SankeyChart({
             align="justify"
             linkCurvature={0.5}
             margin={{
-              top: MARGIN_Y,
+              top,
               bottom: MARGIN_Y,
               left: layout.margin.left,
               right: layout.margin.right,
             }}
             onMouseEnter={(item, type) => {
               const clampY = (y: number) =>
-                Math.min(total - 28, Math.max(28, y))
+                Math.min(total - 28, Math.max(top + 16, y))
               if (type === "node") {
                 const n = item as NodeProps
                 const node = n.payload as unknown as NodePayload

@@ -463,8 +463,9 @@ export function TrendChart({
                 x2={m.time}
                 fill="var(--muted-foreground)"
                 fillOpacity={0.1}
+                // A narrow chart has no room for the label beside its bars.
                 label={
-                  m.label
+                  m.label && width >= 480
                     ? {
                         value: m.label,
                         position: "insideTop",
@@ -724,6 +725,9 @@ export function DonutChart({
               data={slices}
               dataKey="value"
               nameKey="key"
+              // Clockwise from twelve o'clock, in legend order.
+              startAngle={90}
+              endAngle={-270}
               innerRadius="68%"
               outerRadius="100%"
               paddingAngle={slices.length > 1 ? 1.5 : 0}

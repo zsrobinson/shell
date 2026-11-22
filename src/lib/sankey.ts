@@ -177,6 +177,8 @@ export type SankeyLayout = {
   margin: { left: number; right: number }
   /** Narrowest width at which every label fits; scroll below it. */
   minWidth: number
+  /** Each node's label as drawn, truncated in compact layouts. */
+  names: string[]
 }
 
 export const SANKEY_NAME_SIZE = 12
@@ -210,13 +212,21 @@ export function sankeyLayout(
     nodePadding,
     nodeWidth,
     format,
+    maxNameChars,
   }: {
     height: number
     nodePadding: number
     nodeWidth: number
     format: (value: number) => string
+    /** Truncate names past this many characters, with an ellipsis. */
+    maxNameChars?: number
   }
 ): SankeyLayout {
+  const names = data.nodes.map((n) =>
+    maxNameChars && n.name.length > maxNameChars
+      ? `${n.name.slice(0, maxNameChars - 1).trimEnd()}…`
+      : n.name
+  )
   const cols = Array.from({ length: data.columns }, (_, c) =>
     data.nodes.filter((n) => n.column === c)
   )
@@ -270,10 +280,15 @@ export function sankeyLayout(
     const order = col
       .map((n) => data.nodes.indexOf(n))
       .sort((a, b) => data.nodes[b].value - data.nodes[a].value || a - b)
-    // As many labels as fit on one line, then a second line where there is room.
-    for (const mode of ["inline", "full"] as const)
+    // As many labels as fit on one line, then a second line where there is
+    // room. A compact layout prefers two short lines.
+    const modes = maxNameChars
+      ? (["full", "inline"] as const)
+      : (["inline", "full"] as const)
+    for (const mode of modes)
       for (const i of order) {
-        if (mode === "full" && labels[i] === "none") continue
+        if (!maxNameChars && mode === "full" && labels[i] === "none") continue
+        if (maxNameChars && labels[i] !== "none") continue
         const room = fits(i, mode)
         if (!room) continue
         labels[i] = mode
@@ -281,7 +296,7 @@ export function sankeyLayout(
       }
   }
   const widths = data.nodes.map((n, i) => {
-    const name = sankeyTextWidth(n.name, SANKEY_NAME_SIZE)
+    const name = sankeyTextWidth(names[i], SANKEY_NAME_SIZE)
     const value = sankeyTextWidth(format(n.value), SANKEY_VALUE_SIZE)
     if (labels[i] === "full") return Math.max(name, value)
     if (labels[i] === "inline") return name + LABEL_GAP + value
@@ -295,10 +310,12 @@ export function sankeyLayout(
   const last = data.columns - 1
   const left = data.columns > 1 ? widest(0) + LABEL_GAP : 0
   const right = widest(last) + (widest(last) ? LABEL_GAP : 0)
+  // Middle labels sit above their nodes, centred, so they need half their
+  // width on either side.
   let middle = 0
   for (let c = 1; c < last; c++) middle = Math.max(middle, widest(c))
-  const gap = Math.max(MIN_COLUMN_GAP, middle + LABEL_GAP * 3)
+  const gap = Math.max(MIN_COLUMN_GAP, middle / 2 + LABEL_GAP * 2)
   const minWidth =
     left + right + data.columns * nodeWidth + Math.max(0, last) * gap
-  return { scale, offsets, labels, margin: { left, right }, minWidth }
+  return { scale, offsets, labels, margin: { left, right }, minWidth, names }
 }
