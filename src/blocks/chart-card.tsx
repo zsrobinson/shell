@@ -681,8 +681,19 @@ export function DonutChart({
               <Label
                 position="center"
                 content={({ viewBox }) => {
-                  if (!viewBox || !("cx" in viewBox)) return null
-                  const { cx = 0, cy = 0 } = viewBox
+                  if (!viewBox) return null
+                  // Recharts gives a centred Label the chart's box, not the
+                  // ring's polar centre, so derive the centre from either.
+                  const box = viewBox as {
+                    cx?: number
+                    cy?: number
+                    x?: number
+                    y?: number
+                    width?: number
+                    height?: number
+                  }
+                  const cx = box.cx ?? (box.x ?? 0) + (box.width ?? 0) / 2
+                  const cy = box.cy ?? (box.y ?? 0) + (box.height ?? 0) / 2
                   return (
                     <text x={cx} y={cy} textAnchor="middle">
                       <tspan
