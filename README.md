@@ -44,18 +44,19 @@ New app checklist:
 
 ## Export surface
 
-| Import                                | Contents                                                                                                                                                 |
-| ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `@zsrobinson/shell`                   | AppShell, AppIcon, Page, PageHeader, PageTitle, PageMeta, PageActions, PageGrid, PageStack, SectionGroup, AppNavigation, theme hooks, toast, app types   |
-| `@zsrobinson/shell/styles.css`        | Tailwind v4, Flexoki tokens, Geist, radii, Rhea variants and the standard Tailwind type scale                                                            |
-| `@zsrobinson/shell/ui/*`              | Official Rhea primitives: button, card, sidebar, table, field, dialog, checkbox, popover, calendar, and the other UI modules                             |
-| `@zsrobinson/shell/blocks/*`          | confirm-action, copy-button, detail-list, list-row, query-error, file-drop, upload-progress, page-states, date-picker, filter-bar, stat, status-timeline |
-| `@zsrobinson/shell/lib/api`           | ApiError, parseJson, getJson, errorMessage                                                                                                               |
-| `@zsrobinson/shell/lib/format`        | Bytes/MiB, duration, relative/absolute time, percent, count, pluralize, parseTime                                                                        |
-| `@zsrobinson/shell/lib/calendar-date` | Local YYYY-MM-DD dates: parse, format, ranges, end of day, viewer time zone                                                                              |
-| `@zsrobinson/shell/lib/use-upload`    | Progress, mutation notifications and upload limit; app supplies transport and cache refresh                                                              |
-| `@zsrobinson/shell/hooks/use-mobile`  | Mobile breakpoint hook                                                                                                                                   |
-| `@zsrobinson/shell/server`            | createShellServer, mountStatic, serve, ServerOptions, ShellEnv, RequestMetadata                                                                          |
+| Import                                | Contents                                                                                                                                                                              |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@zsrobinson/shell`                   | AppShell, CommandPalette, CommandSearch, AppIcon, Page, PageHeader, PageTitle, PageMeta, PageActions, PageGrid, PageStack, SectionGroup, AppNavigation, theme hooks, toast, app types |
+| `@zsrobinson/shell/styles.css`        | Tailwind v4, Flexoki tokens, Geist, radii, Rhea variants and the standard Tailwind type scale                                                                                         |
+| `@zsrobinson/shell/ui/*`              | Official Rhea primitives: button, card, sidebar, table, field, dialog, checkbox, popover, calendar, combobox, and the other UI modules                                                |
+| `@zsrobinson/shell/blocks/*`          | confirm-action, copy-button, detail-list, list-row, query-error, file-drop, upload-progress, page-states, date-picker, filter-bar, stat, status-timeline, chart-card, sankey-chart    |
+| `@zsrobinson/shell/lib/api`           | ApiError, parseJson, getJson, errorMessage                                                                                                                                            |
+| `@zsrobinson/shell/lib/format`        | Bytes/MiB, duration, relative/absolute time, percent, count, pluralize, parseTime                                                                                                     |
+| `@zsrobinson/shell/lib/calendar-date` | Local YYYY-MM-DD dates: parse, format, ranges, end of day, viewer time zone                                                                                                           |
+| `@zsrobinson/shell/lib/sankey`        | prepareSankey and sankeyLayout: the Sankey block's ordering, colours and label room                                                                                                   |
+| `@zsrobinson/shell/lib/use-upload`    | Progress, mutation notifications and upload limit; app supplies transport and cache refresh                                                                                           |
+| `@zsrobinson/shell/hooks/use-mobile`  | Mobile breakpoint hook                                                                                                                                                                |
+| `@zsrobinson/shell/server`            | createShellServer, mountStatic, serve, ServerOptions, ShellEnv, RequestMetadata                                                                                                       |
 
 Import the stylesheet once; the starter's own CSS is only the import and an
 `@source` directive. All theme decisions belong in shell, not app CSS. Pair `font-mono` with `text-xs` or `text-sm`. Supply data and app navigation to AppShell (`searchPlaceholder` names what the command palette finds); it has
@@ -178,6 +179,69 @@ accessible name. `StatusLegend` is its key.
 Nav items accept `keywords`, extra words the command palette matches (an id, for
 example); hidden nav groups still feed the palette.
 
+AppShell's `search` adds palette results that depend on the typed query, such as records from an
+API: `{ onQueryChange(query), groups, loading? }`. The palette calls
+`onQueryChange` on each keystroke and with `""` when it closes; debounce and
+fetch in the app, then pass the results back as `NavGroup`s. They appear after
+the filtered pages exactly as given (cmdk does not filter them again), a
+search item's `badge` shows at the row's end, and `loading` adds a Searching
+row. Without `search` the palette behaves as before.
+
+```tsx
+<AppShell
+  navGroups={navGroups}
+  search={{
+    onQueryChange: setQuery,
+    loading: results.isFetching,
+    groups: [{ id: "transactions", label: "Transactions", items: rows }],
+  }}
+/>
+```
+
+## Combobox
+
+`ui/combobox` is the official base-rhea Combobox (Base UI). Adaptations are
+lucide icons, pointer cursors, an `inset` prop on `ComboboxItem` to indent a
+child item, and `ComboboxSelectTrigger`, a trigger for a combobox whose search
+input sits in the popup. Its `variant="field"` (default) matches
+`SelectTrigger`; pass `className="w-full"` in a form. `variant="chip"` is a
+compact pill for an inline picker, such as a category in a table row; give
+its `ComboboxContent` a `min-w-60`. Both take `size="sm"`. Pass grouped
+`items` (`{ value: label, items }[]`) to `Combobox` and render
+`ComboboxGroup`/`ComboboxLabel`/`ComboboxCollection` inside `ComboboxList`;
+see `starter/src/combobox-gallery.tsx`.
+
+```tsx
+<Combobox
+  items={groups}
+  value={category}
+  onValueChange={setCategory}
+  itemToStringLabel={(c) => c.label}
+>
+  <ComboboxSelectTrigger variant="chip" size="sm" aria-label="Category">
+    <ComboboxValue placeholder="Uncategorized" />
+  </ComboboxSelectTrigger>
+  <ComboboxContent className="min-w-60">
+    <ComboboxInput showTrigger={false} placeholder="Search categories" />
+    <ComboboxEmpty>No categories found</ComboboxEmpty>
+    <ComboboxList>
+      {(group) => (
+        <ComboboxGroup key={group.value} items={group.items}>
+          <ComboboxLabel>{group.value}</ComboboxLabel>
+          <ComboboxCollection>
+            {(c) => (
+              <ComboboxItem key={c.value} value={c} inset={c.child}>
+                {c.label}
+              </ComboboxItem>
+            )}
+          </ComboboxCollection>
+        </ComboboxGroup>
+      )}
+    </ComboboxList>
+  </ComboboxContent>
+</Combobox>
+```
+
 ## Charts
 
 `ui/chart` is the official base-rhea Recharts component: `ChartContainer`,
@@ -217,6 +281,19 @@ legends sit beside the ring only when the card is wide enough, otherwise below. 
 part-to-whole with the total in the centre and a legend with values and shares;
 beyond `max` slices (default five) the rest folds into a neutral Other, and
 `onSelect` turns legend rows into buttons.
+
+`blocks/sankey-chart` supplies `SankeyChart` and `SankeyChartCard` (title,
+optional `value`, `action` and `footer`) for flows such as income through a
+budget into groups and categories. Pass `nodes` (`{ id, label, color? }`),
+`links` (`{ source, target, value }` by id), `label` and `formatValue`;
+`height` defaults to a size that gives every node room for a label, and
+`onNodeClick` makes nodes buttons. Columns follow the links: sources at the
+left, sinks (such as Saved) at the right. Nodes keep their parents' order, then
+larger first, so the layout is stable. A link takes its source's colour, else
+its target's; leave a hub uncoloured so its links take each group's colour.
+Labels show name and value beside nodes; crowded small nodes fall back to one
+line, then to the tooltip. Where labels would not fit (phones), the chart
+scrolls sideways inside its card with a faded edge; the page never does.
 
 Sign is not identity: use `var(--chart-positive)` and `var(--chart-negative)`
 for inflow and outflow or gain and loss, and `var(--chart-neutral)` for a
