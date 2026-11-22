@@ -44,17 +44,18 @@ New app checklist:
 
 ## Export surface
 
-| Import                               | Contents                                                                                                                                               |
-| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `@zsrobinson/shell`                  | AppShell, AppIcon, Page, PageHeader, PageTitle, PageMeta, PageActions, PageGrid, PageStack, SectionGroup, AppNavigation, theme hooks, toast, app types |
-| `@zsrobinson/shell/styles.css`       | Tailwind v4, Flexoki tokens, Geist, radii, Rhea variants and the standard Tailwind type scale                                                          |
-| `@zsrobinson/shell/ui/*`             | Official Rhea primitives: button, card, sidebar, table, field, dialog, checkbox, popover, calendar, and the other UI modules                           |
-| `@zsrobinson/shell/blocks/*`         | confirm-action, copy-button, detail-list, list-row, query-error, file-drop, upload-progress, page-states                                               |
-| `@zsrobinson/shell/lib/api`          | ApiError, parseJson, getJson, errorMessage                                                                                                             |
-| `@zsrobinson/shell/lib/format`       | Bytes/MiB, duration, relative/absolute time, percent, count, pluralize, parseTime                                                                      |
-| `@zsrobinson/shell/lib/use-upload`   | Progress, mutation notifications and upload limit; app supplies transport and cache refresh                                                            |
-| `@zsrobinson/shell/hooks/use-mobile` | Mobile breakpoint hook                                                                                                                                 |
-| `@zsrobinson/shell/server`           | createShellServer, mountStatic, serve, ServerOptions, ShellEnv, RequestMetadata                                                                        |
+| Import                                | Contents                                                                                                                                                 |
+| ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@zsrobinson/shell`                   | AppShell, AppIcon, Page, PageHeader, PageTitle, PageMeta, PageActions, PageGrid, PageStack, SectionGroup, AppNavigation, theme hooks, toast, app types   |
+| `@zsrobinson/shell/styles.css`        | Tailwind v4, Flexoki tokens, Geist, radii, Rhea variants and the standard Tailwind type scale                                                            |
+| `@zsrobinson/shell/ui/*`              | Official Rhea primitives: button, card, sidebar, table, field, dialog, checkbox, popover, calendar, and the other UI modules                             |
+| `@zsrobinson/shell/blocks/*`          | confirm-action, copy-button, detail-list, list-row, query-error, file-drop, upload-progress, page-states, date-picker, filter-bar, stat, status-timeline |
+| `@zsrobinson/shell/lib/api`           | ApiError, parseJson, getJson, errorMessage                                                                                                               |
+| `@zsrobinson/shell/lib/format`        | Bytes/MiB, duration, relative/absolute time, percent, count, pluralize, parseTime                                                                        |
+| `@zsrobinson/shell/lib/calendar-date` | Local YYYY-MM-DD dates: parse, format, ranges, end of day, viewer time zone                                                                              |
+| `@zsrobinson/shell/lib/use-upload`    | Progress, mutation notifications and upload limit; app supplies transport and cache refresh                                                              |
+| `@zsrobinson/shell/hooks/use-mobile`  | Mobile breakpoint hook                                                                                                                                   |
+| `@zsrobinson/shell/server`            | createShellServer, mountStatic, serve, ServerOptions, ShellEnv, RequestMetadata                                                                          |
 
 Import the stylesheet once; the starter's own CSS is only the import and an
 `@source` directive. All theme decisions belong in shell, not app CSS. Pair `font-mono` with `text-xs` or `text-sm`. Supply data and app navigation to AppShell (`searchPlaceholder` names what the command palette finds); it has
@@ -150,6 +151,32 @@ use-mobile. Flexoki, Geist, the radius scale and data-hue remain centralized.
 Use `Page viewport` for workspaces such as a console: it fills the space below the sticky 48px entity bar. Its content must use `min-h-0` and scroll internally; ordinary pages retain the shared 5xl content column.
 
 Use `FormStack` inside `Page` for form topics: it keeps the shared left edge and caps fields at 3xl, while lists and overview grids use the full content width.
+
+## Filters, figures and status
+
+`blocks/filter-bar` holds the list-page filter row: `FilterBar` wraps controls,
+`MultiSelect` picks several values from a searchable grouped list (none chosen
+means all), and `FilterChips` shows active filters as removable chips with a
+Clear all. Keep filter state in the router's search params so views link and
+Back works.
+
+`blocks/date-picker` gives `DatePicker` (one date in a popover calendar, with
+optional presets such as "30 days" or "No end", and `disabled` days) and
+`DateRangePicker` (relative presets that stay relative in links, plus a custom
+inclusive range with Apply). Values are local `YYYY-MM-DD` calendar dates from
+`lib/calendar-date`; never parse them with `Date.parse`, which reads them as UTC.
+Send `endOfCalendarDay(date)` when an expiry means the end of the viewer's day.
+
+`blocks/stat` gives `Stat` and `StatRow` for a card's figures and `StatDelta`
+for the change against the previous period of the same length. `better` says
+which direction is good (`"down"` for errors), so the tone is meaningful.
+
+`blocks/status-timeline` draws status-page bars, oldest first, one per period:
+`ok`, `degraded`, `down` or `unknown`, with a tooltip each and a summary as the
+accessible name. `StatusLegend` is its key.
+
+Nav items accept `keywords`, extra words the command palette matches (an id, for
+example); hidden nav groups still feed the palette.
 
 ## Charts
 

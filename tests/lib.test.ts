@@ -11,6 +11,14 @@ import {
   formatRelative,
   formatDateTime,
 } from "../src/lib/format"
+import {
+  addDays,
+  endOfCalendarDay,
+  formatCalendarRange,
+  fromCalendarDate,
+  isCalendarDate,
+  toCalendarDate,
+} from "../src/lib/calendar-date"
 test("API parsing preserves status and handles proxy responses", async () => {
   assert.deepEqual(await parseJson(new Response('{"ok":true}')), { ok: true })
   assert.equal(await parseJson(new Response(null, { status: 204 })), null)
@@ -77,4 +85,18 @@ test("donut slices sort, share and fold into a neutral Other", async () => {
     donutSlices([{ key: "x", label: "x", value: 1, color: "red" }])[0].color,
     "red"
   )
+})
+test("calendar dates stay local days, never UTC midnights", () => {
+  assert.equal(toCalendarDate(fromCalendarDate("2026-11-01")), "2026-11-01")
+  assert.equal(fromCalendarDate("2026-03-08").getHours(), 0)
+  assert.equal(isCalendarDate("2026-02-30"), false)
+  assert.equal(isCalendarDate("2026-2-3"), false)
+  assert.equal(isCalendarDate("2026-12-31"), true)
+  assert.equal(addDays(7, new Date(2026, 11, 28, 23, 30)), "2027-01-04")
+  const end = new Date(endOfCalendarDay("2026-11-29"))
+  assert.equal(toCalendarDate(end), "2026-11-29")
+  assert.equal(end.getHours(), 23)
+  assert.ok(!Number.isNaN(Date.parse(endOfCalendarDay("2026-11-29"))))
+  assert.match(formatCalendarRange("2026-11-03", "2026-11-09"), /–/)
+  assert.equal(formatCalendarRange(), "")
 })

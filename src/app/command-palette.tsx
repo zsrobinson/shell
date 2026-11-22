@@ -55,7 +55,8 @@ export function CommandPalette({
                 {group.items.map((item) => (
                   <div key={item.id}>
                     <CommandItem
-                      value={item.label}
+                      value={`${item.label} ${item.id}`}
+                      keywords={item.keywords}
                       onSelect={() => {
                         setOpen(false)
                         selectNavLink(item)
@@ -68,6 +69,7 @@ export function CommandPalette({
                       <CommandItem
                         key={child.id}
                         value={`${item.label} ${child.label}`}
+                        keywords={child.keywords}
                         onSelect={() => {
                           setOpen(false)
                           selectNavLink(child)
