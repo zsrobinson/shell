@@ -218,7 +218,11 @@ export function DateRangePicker({
             selected={selected}
             defaultMonth={
               selected?.from ??
-              new Date(new Date().getFullYear(), new Date().getMonth() - 1)
+              // Two months end on this one; a phone shows this month alone.
+              new Date(
+                new Date().getFullYear(),
+                new Date().getMonth() - (mobile ? 0 : 1)
+              )
             }
             disabled={{ after: new Date() }}
             onSelect={(range) => setDraft(range)}

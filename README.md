@@ -210,7 +210,7 @@ a month in progress on a bar chart), and `dashed` draws listed series as dashed
 lines without fill, such as a projection. Legends follow series order, which is
 also the stack order; `legend` names a single series too. `TrendChart` and the cards take `stacked` (bars stack by sign, so negative
 series grow below a zero line), `formatTime` for ticks and tooltip headings,
-and `className` for the chart height. `baseline="data"` fits an area chart's
+and `className` for the chart height. `integer` keeps value ticks on whole steps for counts. `baseline="data"` fits an area chart's
 value axis to its series instead of zero, for balances and other levels where
 change matters more than size; bars and stacks always start at zero. Donut
 legends sit beside the ring only when the card is wide enough, otherwise below. `DonutChart`/`DonutChartCard` show a

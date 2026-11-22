@@ -178,6 +178,7 @@ export function TrendChart({
   timeTicks: fixedTimeTicks,
   utc = false,
   legend: showLegend,
+  integer = false,
 }: {
   data: ChartPoint[]
   config: ChartConfig
@@ -229,6 +230,8 @@ export function TrendChart({
   utc?: boolean
   /** Name the series below the chart; on by default for two or more. */
   legend?: boolean
+  /** Whole-number values such as counts: value ticks step by at least 1. */
+  integer?: boolean
 }) {
   const height = className ?? (sparkline ? "h-12" : "h-56")
   const [ref, size] = useElementSize<HTMLDivElement>()
@@ -270,10 +273,11 @@ export function TrendChart({
       hi = Math.max(0, hi)
     }
     const maxTicks = Math.min(7, Math.max(3, Math.round(plotHeight / 36) + 1))
-    yScale = niceTicks(lo, hi, maxTicks)
+    const minStep = integer ? 1 : 0
+    yScale = niceTicks(lo, hi, maxTicks, minStep)
     // Keep a labelled line off the very top so its label stays inside.
     if (references.some((r) => r.label && r.value === yScale!.domain[1]))
-      yScale = niceTicks(lo, hi + (hi - lo) / maxTicks, maxTicks)
+      yScale = niceTicks(lo, hi + (hi - lo) / maxTicks, maxTicks, minStep)
   }
 
   // Time axis: calendar-aligned ticks spaced for the room, labels unclipped.

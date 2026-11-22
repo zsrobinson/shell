@@ -13,9 +13,15 @@ export type NiceScale = { domain: [number, number]; ticks: number[] }
 
 /**
  * The tightest domain on round steps that covers `min`..`max` with at most
- * `maxTicks` ticks. Equal bounds widen around the value.
+ * `maxTicks` ticks. Equal bounds widen around the value. `minStep` keeps
+ * steps at or above it, such as 1 for counts.
  */
-export function niceTicks(min: number, max: number, maxTicks = 5): NiceScale {
+export function niceTicks(
+  min: number,
+  max: number,
+  maxTicks = 5,
+  minStep = 0
+): NiceScale {
   if (!Number.isFinite(min) || !Number.isFinite(max))
     return { domain: [0, 1], ticks: [0, 1] }
   if (min > max) [min, max] = [max, min]
@@ -31,6 +37,7 @@ export function niceTicks(min: number, max: number, maxTicks = 5): NiceScale {
   for (let guard = 0; guard < 40; guard++) {
     for (const m of STEPS) {
       const step = clean(m * decade)
+      if (step < minStep) continue
       const lo = Math.floor(clean(min / step)) * step
       const hi = Math.ceil(clean(max / step)) * step
       const n = Math.round((hi - lo) / step) + 1
