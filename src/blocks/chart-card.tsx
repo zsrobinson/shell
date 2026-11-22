@@ -194,6 +194,8 @@ export function TrendChart({
   utc = false,
   legend: showLegend,
   integer = false,
+  onSelect,
+  selected,
 }: {
   data: ChartPoint[]
   config: ChartConfig
@@ -247,6 +249,13 @@ export function TrendChart({
   legend?: boolean
   /** Whole-number values such as counts: value ticks step by at least 1. */
   integer?: boolean
+  /**
+   * Bar charts only: choose a bar (a time) by clicking it. Other times dim
+   * while one is selected. Offer a keyboard path too, such as a table.
+   */
+  onSelect?: (time: number) => void
+  /** The selected time, from `onSelect`. */
+  selected?: number
 }) {
   const height = className ?? (sparkline ? "h-12" : "h-56")
   const [ref, size] = useElementSize<HTMLDivElement>()
@@ -264,6 +273,7 @@ export function TrendChart({
       </div>
     )
   const Plot = kind === "bar" ? BarChart : AreaChart
+  const selectable = kind === "bar" && !sparkline && onSelect !== undefined
   const legend = !sparkline && (showLegend ?? keys.length > 1)
   const width = size?.width ?? 600
   const plotWidth = Math.max(80, width - Y_AXIS_WIDTH - MARGIN.right)
@@ -357,6 +367,15 @@ export function TrendChart({
           accessibilityLayer
           data={data}
           stackOffset={stacked && kind === "bar" ? "sign" : undefined}
+          className={selectable ? "cursor-pointer" : undefined}
+          onClick={
+            selectable
+              ? (state) => {
+                  const i = Number(state?.activeTooltipIndex)
+                  if (Number.isInteger(i) && data[i]) onSelect(data[i].time)
+                }
+              : undefined
+          }
           margin={sparkline ? { left: 0, right: 0, top: 2, bottom: 2 } : margin}
         >
           {!sparkline && <CartesianGrid vertical={false} />}
@@ -468,7 +487,16 @@ export function TrendChart({
                 radius={stacked ? 2 : 3}
                 maxBarSize={48}
                 isAnimationActive={false}
-              />
+              >
+                {selectable && selected !== undefined
+                  ? data.map((p) => (
+                      <Cell
+                        key={p.time}
+                        fillOpacity={p.time === selected ? 1 : 0.4}
+                      />
+                    ))
+                  : null}
+              </Bar>
             ) : (
               <Area
                 key={key}
