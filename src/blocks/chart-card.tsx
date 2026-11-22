@@ -316,6 +316,14 @@ export function TrendChart({
       Math.max(1, Math.floor(plotWidth / (labelWidth(sample) + 16)))
     )
   }
+  // The newest bar's label is centred on it; widen the right margin so a
+  // long label (such as "Sun 12 PM") is never clipped at the card edge.
+  let margin = MARGIN
+  if (!sparkline && kind === "bar" && xLabel && data.length) {
+    const half = labelWidth(xLabel(data[data.length - 1].time)) / 2
+    const overflow = Math.ceil(half - plotWidth / data.length / 2) + 2
+    if (overflow > MARGIN.right) margin = { ...MARGIN, right: overflow }
+  }
 
   return (
     <div ref={ref} className={`w-full min-w-0 ${height}`}>
@@ -329,7 +337,7 @@ export function TrendChart({
           accessibilityLayer
           data={data}
           stackOffset={stacked && kind === "bar" ? "sign" : undefined}
-          margin={sparkline ? { left: 0, right: 0, top: 2, bottom: 2 } : MARGIN}
+          margin={sparkline ? { left: 0, right: 0, top: 2, bottom: 2 } : margin}
         >
           {!sparkline && <CartesianGrid vertical={false} />}
           {!sparkline && (
