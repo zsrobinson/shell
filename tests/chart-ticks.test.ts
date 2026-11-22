@@ -113,3 +113,10 @@ test("category ticks are evenly spaced and keep the latest", () => {
   assert.deepEqual(everyNth(months, 4), [2, 5, 8, 11])
   assert.deepEqual(everyNth(months, 20), months)
 })
+
+test("count charts never get fractional ticks", () => {
+  assert.deepEqual(niceTicks(0, 2, 5, 1).ticks, [0, 1, 2])
+  assert.deepEqual(niceTicks(0, 1, 5, 1).ticks, [0, 1])
+  assert.deepEqual(niceTicks(0, 2, 5).ticks, [0, 0.5, 1, 1.5, 2])
+  assert.deepEqual(niceTicks(0, 40, 5, 1).ticks, [0, 10, 20, 30, 40])
+})

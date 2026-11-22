@@ -86,6 +86,21 @@ export function ChartRangeSelect<T extends string = ChartRange>({
   )
 }
 /** The rendered size of an element, following resizes; pass `ref` to it. */
+const coarseQuery = "(hover: none) and (pointer: coarse)"
+/**
+ * Touch screens have no hover, and Recharts follows only touch moves, so a
+ * tap would show nothing. There the tooltip opens on tap (a click) instead.
+ */
+function useTooltipTrigger(): "hover" | "click" {
+  const [coarse] = useState(
+    () =>
+      typeof window !== "undefined" &&
+      typeof window.matchMedia === "function" &&
+      window.matchMedia(coarseQuery).matches
+  )
+  return coarse ? "click" : "hover"
+}
+
 function useElementSize<T extends HTMLElement>() {
   const [element, ref] = useState<T | null>(null)
   const [size, setSize] = useState<{ width: number; height: number } | null>(
@@ -178,6 +193,7 @@ export function TrendChart({
   timeTicks: fixedTimeTicks,
   utc = false,
   legend: showLegend,
+  integer = false,
 }: {
   data: ChartPoint[]
   config: ChartConfig
@@ -229,9 +245,12 @@ export function TrendChart({
   utc?: boolean
   /** Name the series below the chart; on by default for two or more. */
   legend?: boolean
+  /** Whole-number values such as counts: value ticks step by at least 1. */
+  integer?: boolean
 }) {
   const height = className ?? (sparkline ? "h-12" : "h-56")
   const [ref, size] = useElementSize<HTMLDivElement>()
+  const trigger = useTooltipTrigger()
   const keys = Object.keys(config)
   const negative = data.some((p) => keys.some((k) => (p[k] ?? 0) < 0))
   const empty = !data.some((p) => keys.some((k) => p[k] != null))
@@ -270,10 +289,11 @@ export function TrendChart({
       hi = Math.max(0, hi)
     }
     const maxTicks = Math.min(7, Math.max(3, Math.round(plotHeight / 36) + 1))
-    yScale = niceTicks(lo, hi, maxTicks)
+    const minStep = integer ? 1 : 0
+    yScale = niceTicks(lo, hi, maxTicks, minStep)
     // Keep a labelled line off the very top so its label stays inside.
     if (references.some((r) => r.label && r.value === yScale!.domain[1]))
-      yScale = niceTicks(lo, hi + (hi - lo) / maxTicks, maxTicks)
+      yScale = niceTicks(lo, hi + (hi - lo) / maxTicks, maxTicks, minStep)
   }
 
   // Time axis: calendar-aligned ticks spaced for the room, labels unclipped.
@@ -316,6 +336,14 @@ export function TrendChart({
       Math.max(1, Math.floor(plotWidth / (labelWidth(sample) + 16)))
     )
   }
+  // The newest bar's label is centred on it; widen the right margin so a
+  // long label (such as "Sun 12 PM") is never clipped at the card edge.
+  let margin = MARGIN
+  if (!sparkline && kind === "bar" && xLabel && data.length) {
+    const half = labelWidth(xLabel(data[data.length - 1].time)) / 2
+    const overflow = Math.ceil(half - plotWidth / data.length / 2) + 2
+    if (overflow > MARGIN.right) margin = { ...MARGIN, right: overflow }
+  }
 
   return (
     <div ref={ref} className={`w-full min-w-0 ${height}`}>
@@ -329,7 +357,7 @@ export function TrendChart({
           accessibilityLayer
           data={data}
           stackOffset={stacked && kind === "bar" ? "sign" : undefined}
-          margin={sparkline ? { left: 0, right: 0, top: 2, bottom: 2 } : MARGIN}
+          margin={sparkline ? { left: 0, right: 0, top: 2, bottom: 2 } : margin}
         >
           {!sparkline && <CartesianGrid vertical={false} />}
           {!sparkline && (
@@ -369,6 +397,7 @@ export function TrendChart({
           ) : null}
           {!sparkline && (
             <ChartTooltip
+              trigger={trigger}
               content={
                 <ChartTooltipContent
                   labelFormatter={(_, payload) => {

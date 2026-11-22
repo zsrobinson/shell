@@ -50,6 +50,8 @@ export type NavLink = {
   badge?: ReactNode
   section?: string
   onSelect?: () => void
+  /** Extra words the command palette matches, such as an id. */
+  keywords?: string[]
 }
 export type NavItem = NavLink & {
   children?: NavLink[]

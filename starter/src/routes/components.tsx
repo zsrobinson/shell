@@ -158,6 +158,23 @@ import {
 import { ListRow, EmptyList } from "@zsrobinson/shell/blocks/list-row"
 import { QueryError } from "@zsrobinson/shell/blocks/query-error"
 import { FileDrop } from "@zsrobinson/shell/blocks/file-drop"
+import {
+  addDays,
+  DatePicker,
+  DateRangePicker,
+  type DateRangeValue,
+} from "@zsrobinson/shell/blocks/date-picker"
+import {
+  FilterBar,
+  FilterChips,
+  MultiSelect,
+} from "@zsrobinson/shell/blocks/filter-bar"
+import { Stat, StatDelta, StatRow } from "@zsrobinson/shell/blocks/stat"
+import {
+  StatusLegend,
+  StatusTimeline,
+  type StatusState,
+} from "@zsrobinson/shell/blocks/status-timeline"
 import { UploadProgress } from "@zsrobinson/shell/blocks/upload-progress"
 import {
   SignedOut,
@@ -201,11 +218,123 @@ function Components() {
     </Page>
   )
 }
+const STATES: StatusState[] = ["ok", "ok", "ok", "degraded", "ok", "down"]
+const timeline = Array.from({ length: 24 }, (_, i) => ({
+  time: Date.UTC(2026, 10, 20, i),
+  state: i < 2 ? ("unknown" as const) : STATES[i % STATES.length],
+}))
+
+function FilterGallery() {
+  const [range, setRange] = useState<DateRangeValue>({ preset: "7d" })
+  const [kinds, setKinds] = useState<string[]>(["a"])
+  const [until, setUntil] = useState("")
+  const chips = [
+    ...(kinds.length
+      ? [
+          {
+            id: "kind",
+            label: "Kind",
+            value: kinds.join(", "),
+            onRemove: () => setKinds([]),
+          },
+        ]
+      : []),
+    ...("preset" in range && range.preset === "7d"
+      ? []
+      : [
+          {
+            id: "range",
+            label: "Date",
+            value: "Custom",
+            onRemove: () => setRange({ preset: "7d" }),
+          },
+        ]),
+  ]
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Filters, stats and status</CardTitle>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-4">
+        <FilterBar>
+          <DateRangePicker
+            value={range}
+            onChange={setRange}
+            presets={[
+              { value: "24h", label: "Last 24 hours" },
+              { value: "7d", label: "Last 7 days" },
+              { value: "all", label: "All time" },
+            ]}
+          />
+          <MultiSelect
+            label="Kind"
+            value={kinds}
+            onChange={setKinds}
+            options={[
+              { value: "a", label: "Alpha", group: "Reads" },
+              { value: "b", label: "Beta", group: "Reads" },
+              { value: "c", label: "Gamma", group: "Writes" },
+            ]}
+          />
+          <DatePicker
+            aria-label="Allow until"
+            value={until}
+            onChange={setUntil}
+            placeholder="No end"
+            disabled={{ before: new Date() }}
+            presets={[
+              { label: "1 week", value: addDays(7) },
+              { label: "30 days", value: addDays(30) },
+              { label: "No end", value: "" },
+            ]}
+          />
+        </FilterBar>
+        <FilterChips
+          chips={chips}
+          onClear={() => {
+            setKinds([])
+            setRange({ preset: "7d" })
+          }}
+        />
+        <StatRow>
+          <Stat
+            label="Calls"
+            delta={<StatDelta current={412} previous={380} />}
+          >
+            412
+          </Stat>
+          <Stat
+            label="Errors"
+            delta={<StatDelta current={9} previous={4} better="down" />}
+          >
+            9
+          </Stat>
+          <Stat label="New" delta={<StatDelta current={3} previous={0} />}>
+            3
+          </Stat>
+        </StatRow>
+        <StatusTimeline
+          points={timeline}
+          label="Example service, last 24 hours"
+          formatTime={(time) =>
+            new Intl.DateTimeFormat(undefined, {
+              hour: "numeric",
+              timeZone: "UTC",
+            }).format(time)
+          }
+        />
+        <StatusLegend />
+      </CardContent>
+    </Card>
+  )
+}
+
 function Gallery() {
   const [file, setFile] = useState<File | null>(null)
   return (
     <TooltipProvider>
       <div className="flex flex-col gap-6">
+        <FilterGallery />
         <Card>
           <CardHeader>
             <CardTitle>Buttons and status</CardTitle>
