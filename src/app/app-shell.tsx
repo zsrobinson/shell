@@ -1,7 +1,7 @@
 import type { ReactNode } from "react"
 import { ChevronDownIcon, EllipsisIcon } from "lucide-react"
 import { AppNavigation, type NavGroup, type NavItem } from "./navigation"
-import { CommandPalette } from "./command-palette"
+import { CommandPalette, type CommandSearch } from "./command-palette"
 import { Button } from "../components/ui/button"
 import {
   DropdownMenu,
@@ -38,6 +38,8 @@ export type AppShellProps = {
   entityBar?: EntityBar
   /** Names what the command palette finds, for example servers and pages. */
   searchPlaceholder?: string
+  /** Query-dependent command palette results, alongside `navGroups`. */
+  search?: CommandSearch
   children: ReactNode
 }
 export function AppShell({
@@ -51,6 +53,7 @@ export function AppShell({
   breadcrumbs,
   entityBar,
   searchPlaceholder,
+  search,
   children,
 }: AppShellProps) {
   const entity = entityBar?.entity
@@ -162,6 +165,7 @@ export function AppShell({
               <CommandPalette
                 groups={navGroups}
                 placeholder={searchPlaceholder}
+                search={search}
               />
             ) : null}
           </header>
